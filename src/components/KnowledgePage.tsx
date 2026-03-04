@@ -1158,79 +1158,118 @@ const TracePanel: React.FC<{
   );
 };
 
+const EXP_PAGE_SIZE = 2;
+
+const INNER_TABS = [
+  { key: 'pitfall'       as const, label: '🪤 踩坑沉淀' },
+  { key: 'best_practice' as const, label: '✨ 最佳实践' },
+];
+
 const ExperienceTab: React.FC<{ onEnterRepo: (typeKey: string) => void }> = ({ onEnterRepo }) => {
   const C = useTheme();
+  const [innerTab, setInnerTab] = useState<'pitfall' | 'best_practice'>('pitfall');
+  const [page, setPage] = useState(0);
   const [selected, setSelected] = useState<PracticalExperience | null>(null);
 
-  const pitfalls = MOCK_EXPERIENCES
-    .filter(e => e.type === 'pitfall')
+  const items = MOCK_EXPERIENCES
+    .filter(e => e.type === innerTab)
     .sort((a, b) => b.triggerCount - a.triggerCount);
 
-  const bestPractices = MOCK_EXPERIENCES
-    .filter(e => e.type === 'best_practice')
-    .sort((a, b) => b.triggerCount - a.triggerCount);
+  const totalPages = Math.max(1, Math.ceil(items.length / EXP_PAGE_SIZE));
+  const pageItems = items.slice(page * EXP_PAGE_SIZE, (page + 1) * EXP_PAGE_SIZE);
+
+  const handleInnerTab = (key: 'pitfall' | 'best_practice') => {
+    setInnerTab(key);
+    setPage(0);
+    setSelected(null);
+  };
 
   const handleSelect = (exp: PracticalExperience) =>
     setSelected(prev => prev?.id === exp.id ? null : exp);
 
-  const colStyle = (flex: number): React.CSSProperties => ({
-    flex, minWidth: 0, display: 'flex', flexDirection: 'column',
-    transition: 'flex 0.3s ease',
-  });
-
   return (
     <div style={{ animation: 'fadeUp 0.3s ease' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <div>
-          <span style={{ fontSize: 15, fontWeight: 800, color: C.text }}>⚡ 实战经验</span>
-          <span style={{ fontSize: 12, color: C.muted, marginLeft: 10 }}>
-            {MOCK_EXPERIENCES.length} 条 · 按热度排序
-          </span>
-        </div>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
+        <span style={{ fontSize: 15, fontWeight: 800, color: C.text }}>⚡ 实战经验</span>
+        <span style={{ fontSize: 12, color: C.muted, marginLeft: 10 }}>
+          {MOCK_EXPERIENCES.length} 条 · 按热度排序
+        </span>
       </div>
 
-      {/* Columns */}
+      {/* Left / Right layout */}
       <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-        {/* Pitfalls */}
-        <div style={colStyle(selected ? 2 : 3)}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: C.text, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-            🪤 踩坑沉淀
-            <span style={{ fontSize: 10, background: C.border, color: C.muted, borderRadius: 8, padding: '1px 6px' }}>
-              {pitfalls.length}条
-            </span>
+
+        {/* Left: inner tabs + paginated list */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Inner tab bar */}
+          <div style={{ display: 'flex', borderBottom: `1px solid ${C.border}`, marginBottom: 14 }}>
+            {INNER_TABS.map(({ key, label }) => {
+              const active = innerTab === key;
+              const count = MOCK_EXPERIENCES.filter(e => e.type === key).length;
+              return (
+                <button key={key} className="kn-tab"
+                  onClick={() => handleInnerTab(key)}
+                  style={{
+                    background: 'transparent', border: 'none',
+                    borderBottom: `2px solid ${active ? C.blue : 'transparent'}`,
+                    padding: '8px 16px', color: active ? C.blue : C.muted,
+                    cursor: 'pointer', fontSize: 13, fontWeight: active ? 700 : 400,
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    transition: 'color 0.15s, border-color 0.15s',
+                    marginBottom: -1,
+                  }}
+                >
+                  {label}
+                  <span style={{
+                    fontSize: 10, padding: '1px 6px', borderRadius: 8,
+                    background: active ? C.blue : C.border,
+                    color: active ? '#fff' : C.muted, fontWeight: 700,
+                  }}>{count}</span>
+                </button>
+              );
+            })}
           </div>
-          {pitfalls.map(exp => (
-            <ExperienceCard
-              key={exp.id}
-              exp={exp}
-              selected={selected?.id === exp.id}
-              onClick={() => handleSelect(exp)}
-            />
-          ))}
+
+          {/* Card list */}
+          <div>
+            {pageItems.map(exp => (
+              <ExperienceCard
+                key={exp.id}
+                exp={exp}
+                selected={selected?.id === exp.id}
+                onClick={() => handleSelect(exp)}
+              />
+            ))}
+          </div>
+
+          {/* Pagination */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 12 }}>
+            <button
+              onClick={() => setPage(p => Math.max(0, p - 1))}
+              disabled={page === 0}
+              style={{
+                background: 'none', border: `1px solid ${C.border}`, borderRadius: 6,
+                padding: '4px 12px', cursor: page === 0 ? 'not-allowed' : 'pointer',
+                color: page === 0 ? C.border : C.muted, fontSize: 13,
+              }}
+            >‹</button>
+            <span style={{ fontSize: 12, color: C.muted }}>{page + 1} / {totalPages}</span>
+            <button
+              onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+              disabled={page === totalPages - 1}
+              style={{
+                background: 'none', border: `1px solid ${C.border}`, borderRadius: 6,
+                padding: '4px 12px', cursor: page === totalPages - 1 ? 'not-allowed' : 'pointer',
+                color: page === totalPages - 1 ? C.border : C.muted, fontSize: 13,
+              }}
+            >›</button>
+          </div>
         </div>
 
-        {/* Best Practices */}
-        <div style={colStyle(selected ? 2 : 3)}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: C.text, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-            ✨ 最佳实践
-            <span style={{ fontSize: 10, background: C.border, color: C.muted, borderRadius: 8, padding: '1px 6px' }}>
-              {bestPractices.length}条
-            </span>
-          </div>
-          {bestPractices.map(exp => (
-            <ExperienceCard
-              key={exp.id}
-              exp={exp}
-              selected={selected?.id === exp.id}
-              onClick={() => handleSelect(exp)}
-            />
-          ))}
-        </div>
-
-        {/* Trace Panel (conditional) */}
+        {/* Right: TracePanel */}
         {selected && (
-          <div style={colStyle(3)}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <TracePanel
               exp={selected}
               onClose={() => setSelected(null)}
