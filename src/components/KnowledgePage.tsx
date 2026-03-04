@@ -1,28 +1,6 @@
 import React, { useState, useEffect } from 'react';
-
-// ─── Design Tokens ───────────────────────────────────────────────
-const C = {
-  bg: '#0a0f1e',
-  card: '#1a2235',
-  cardHover: '#1e2a40',
-  border: '#1e2d45',
-  borderHover: '#2d4060',
-  input: '#111827',
-  text: '#f1f5f9',
-  muted: '#94a3b8',
-  blue: '#3b82f6',
-  blueLight: '#60a5fa',
-  green: '#10b981',
-  greenLight: '#34d399',
-  purple: '#8b5cf6',
-  purpleLight: '#a78bfa',
-  orange: '#f59e0b',
-  red: '#ef4444',
-  cyan: '#06b6d4',
-  pink: '#ec4899',
-  radius: '12px',
-  radiusSm: '8px',
-};
+import { Briefcase, ClipboardList, Building2, Settings, Monitor, Palette, CheckCircle, BarChart2, Pin, Folder, FileText, Sparkles, Search, Brain, BookOpen } from 'lucide-react';
+import { useTheme } from '../ThemeContext';
 
 // ─── Style injection ──────────────────────────────────────────────
 const injectStyles = () => {
@@ -42,17 +20,17 @@ const injectStyles = () => {
       from { opacity: 0; transform: translateX(-12px); }
       to   { opacity: 1; transform: translateX(0); }
     }
-    .kn-tab:hover { color: ${C.text} !important; }
+    .kn-tab:hover { color: #f1f5f9 !important; }
     .kn-btn:hover { opacity: 0.85; transform: translateY(-1px); }
     .kn-btn { transition: opacity 0.15s, transform 0.15s; }
-    .kn-input:focus { outline: none; border-color: ${C.blue} !important; box-shadow: 0 0 0 3px rgba(59,130,246,0.15) !important; }
-    .kn-card:hover { background: ${C.cardHover} !important; border-color: ${C.borderHover} !important; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+    .kn-input:focus { outline: none; border-color: #3b82f6 !important; box-shadow: 0 0 0 3px rgba(59,130,246,0.15) !important; }
+    .kn-card:hover { background: #1e2a40 !important; border-color: #2d4060 !important; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
     .kn-card { transition: background 0.15s, border-color 0.15s, transform 0.2s, box-shadow 0.2s; }
     .kn-tree-item:hover { background: rgba(59,130,246,0.08) !important; }
     .kn-tree-item { transition: background 0.12s; }
-    .kn-pr-row:hover { background: ${C.cardHover} !important; }
+    .kn-pr-row:hover { background: #1e2a40 !important; }
     .kn-pr-row { transition: background 0.12s; }
-    .filter-chip:hover { border-color: ${C.blue} !important; color: ${C.text} !important; }
+    .filter-chip:hover { border-color: #3b82f6 !important; color: #f1f5f9 !important; }
     .filter-chip { transition: border-color 0.15s, color 0.15s, background 0.15s; }
   `;
   document.head.appendChild(style);
@@ -88,22 +66,22 @@ interface KnowledgeTypeConfig {
   label: string;
   category: KnowledgeCategory;
   color: string;
-  icon: string;
+  icon: React.ReactElement;
   desc: string;
 }
 
 const KNOWLEDGE_TYPES: KnowledgeTypeConfig[] = [
   // 业务知识库
-  { key: '业务知识', label: '业务知识', category: 'business', color: C.blue, icon: '💼', desc: 'PD 维护 · 业务概念/规则/产品文档' },
-  { key: '项目知识', label: '项目知识', category: 'business', color: C.cyan, icon: '📋', desc: 'PM 维护 · 项目背景/人员/文档空间' },
-  { key: '架构知识', label: '架构知识', category: 'business', color: C.purple, icon: '🏗️', desc: '架构师维护 · 架构域/规范/稳定性/安全' },
-  { key: '系统知识', label: '系统知识', category: 'business', color: C.green, icon: '⚙️', desc: '系统 Owner 维护 · 核心系统/API/代码模板' },
+  { key: '业务知识', label: '业务知识', category: 'business', color: '#3b82f6', icon: <Briefcase size={16} />, desc: 'PD 维护 · 业务概念/规则/产品文档' },
+  { key: '项目知识', label: '项目知识', category: 'business', color: '#06b6d4', icon: <ClipboardList size={16} />, desc: 'PM 维护 · 项目背景/人员/文档空间' },
+  { key: '架构知识', label: '架构知识', category: 'business', color: '#8b5cf6', icon: <Building2 size={16} />, desc: '架构师维护 · 架构域/规范/稳定性/安全' },
+  { key: '系统知识', label: '系统知识', category: 'business', color: '#10b981', icon: <Settings size={16} />, desc: '系统 Owner 维护 · 核心系统/API/代码模板' },
   // 工程通识库
-  { key: '后端通识', label: '后端通识', category: 'engineering', color: C.orange, icon: '🖥️', desc: '后端技术栈/中间件' },
-  { key: '前端通识', label: '前端通识', category: 'engineering', color: C.pink, icon: '🎨', desc: '前端技术栈/组件库' },
-  { key: '质量通识', label: '质量通识', category: 'engineering', color: C.green, icon: '✅', desc: '质量规范/卡点/工具' },
-  { key: '数据通识', label: '数据通识', category: 'engineering', color: C.cyan, icon: '📊', desc: '数据规范/数据研发' },
-  { key: '项管通识', label: '项管通识', category: 'engineering', color: C.purple, icon: '📌', desc: '项管流程/产研规范' },
+  { key: '后端通识', label: '后端通识', category: 'engineering', color: '#f59e0b', icon: <Monitor size={16} />, desc: '后端技术栈/中间件' },
+  { key: '前端通识', label: '前端通识', category: 'engineering', color: '#ec4899', icon: <Palette size={16} />, desc: '前端技术栈/组件库' },
+  { key: '质量通识', label: '质量通识', category: 'engineering', color: '#10b981', icon: <CheckCircle size={16} />, desc: '质量规范/卡点/工具' },
+  { key: '数据通识', label: '数据通识', category: 'engineering', color: '#06b6d4', icon: <BarChart2 size={16} />, desc: '数据规范/数据研发' },
+  { key: '项管通识', label: '项管通识', category: 'engineering', color: '#8b5cf6', icon: <Pin size={16} />, desc: '项管流程/产研规范' },
 ];
 
 type MemberRole = 'Owner' | 'Maintainer' | 'Contributor' | 'Viewer';
@@ -348,12 +326,13 @@ const TypeTag: React.FC<{ typeKey: string; size?: 'sm' | 'md' }> = ({ typeKey, s
       alignItems: 'center',
       gap: 4,
     }}>
-      {cfg.icon} {cfg.label}
+      {cfg.icon}<span>{cfg.label}</span>
     </span>
   );
 };
 
 const RoleBadge: React.FC<{ role: MemberRole }> = ({ role }) => {
+  const C = useTheme();
   const map: Record<MemberRole, { color: string; bg: string }> = {
     Owner:       { color: C.orange, bg: 'rgba(245,158,11,0.12)' },
     Maintainer:  { color: C.purple, bg: 'rgba(139,92,246,0.12)' },
@@ -369,6 +348,7 @@ const RoleBadge: React.FC<{ role: MemberRole }> = ({ role }) => {
 };
 
 const PRStatusBadge: React.FC<{ status: PRItem['status'] }> = ({ status }) => {
+  const C = useTheme();
   const map = {
     open:   { label: 'Open',   color: C.green,  bg: 'rgba(16,185,129,0.12)', icon: '●' },
     merged: { label: 'Merged', color: C.purple, bg: 'rgba(139,92,246,0.12)', icon: '⬡' },
@@ -389,6 +369,8 @@ const TreeItem: React.FC<{
   selectedFile: string | null;
   onSelect: (name: string, content: string) => void;
 }> = ({ node, depth, selectedFile, onSelect }) => {
+  const C = useTheme();
+  const blueLight = '#60a5fa';
   const [open, setOpen] = useState(depth === 0);
   const isSelected = node.type === 'file' && selectedFile === node.name;
 
@@ -406,7 +388,7 @@ const TreeItem: React.FC<{
           }}
         >
           <span style={{ fontSize: 11, transition: 'transform 0.15s', transform: open ? 'rotate(90deg)' : 'rotate(0deg)' }}>▶</span>
-          <span>📁</span>
+          <Folder size={13} />
           <span style={{ fontWeight: 500 }}>{node.name}</span>
         </div>
         {open && node.children?.map((child, i) => (
@@ -425,12 +407,12 @@ const TreeItem: React.FC<{
         padding: `5px 8px 5px ${8 + depth * 16}px`,
         cursor: 'pointer', borderRadius: 6,
         background: isSelected ? 'rgba(59,130,246,0.12)' : 'transparent',
-        color: isSelected ? C.blueLight : C.muted,
+        color: isSelected ? blueLight : C.muted,
         fontSize: 13,
         borderLeft: isSelected ? `2px solid ${C.blue}` : '2px solid transparent',
       }}
     >
-      <span>📄</span>
+      <FileText size={13} />
       <span style={{ fontWeight: isSelected ? 600 : 400 }}>{node.name}</span>
     </div>
   );
@@ -438,6 +420,8 @@ const TreeItem: React.FC<{
 
 // ─── Markdown Renderer (simple) ───────────────────────────────────
 const MarkdownView: React.FC<{ content: string }> = ({ content }) => {
+  const C = useTheme();
+  const blueLight = '#60a5fa';
   const lines = content.split('\n');
   const elements: React.ReactNode[] = [];
   let i = 0;
@@ -455,8 +439,8 @@ const MarkdownView: React.FC<{ content: string }> = ({ content }) => {
       }
       elements.push(
         <pre key={i} style={{
-          background: '#0d1117', border: `1px solid ${C.border}`, borderRadius: 8,
-          padding: '14px 16px', fontSize: 12, color: '#e6edf3', overflowX: 'auto',
+          background: C.sidebarBg, border: `1px solid ${C.border}`, borderRadius: 8,
+          padding: '14px 16px', fontSize: 12, color: C.text, overflowX: 'auto',
           margin: '12px 0', lineHeight: 1.6, fontFamily: 'monospace',
         }}>
           {lang && <div style={{ color: C.muted, fontSize: 10, marginBottom: 8, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{lang}</div>}
@@ -476,7 +460,7 @@ const MarkdownView: React.FC<{ content: string }> = ({ content }) => {
     }
     // H3
     else if (line.startsWith('### ')) {
-      elements.push(<h3 key={i} style={{ fontSize: 14, fontWeight: 700, color: C.blueLight, margin: '16px 0 8px' }}>{line.slice(4)}</h3>);
+      elements.push(<h3 key={i} style={{ fontSize: 14, fontWeight: 700, color: blueLight, margin: '16px 0 8px' }}>{line.slice(4)}</h3>);
     }
     // Table
     else if (line.startsWith('|')) {
@@ -536,7 +520,7 @@ const MarkdownView: React.FC<{ content: string }> = ({ content }) => {
     // Inline code / bold paragraph
     else if (line.trim()) {
       const rendered = line
-        .replace(/`([^`]+)`/g, `<code style="background:#1e2d45;color:${C.blueLight};padding:1px 5px;border-radius:4px;font-family:monospace;font-size:12px">$1</code>`)
+        .replace(/`([^`]+)`/g, `<code style="background:${C.border};color:${C.blue};padding:1px 5px;border-radius:4px;font-family:monospace;font-size:12px">$1</code>`)
         .replace(/\*\*([^*]+)\*\*/g, `<strong style="color:${C.text}">$1</strong>`)
         .replace(/⚠️/g, `<span style="color:${C.orange}">⚠️</span>`)
         .replace(/❌/g, `<span style="color:${C.red}">❌</span>`);
@@ -603,6 +587,9 @@ const simulateAIResponse = (input: string, repo: KnowledgeRepo): ChatMessage => 
 };
 
 const ChatTab: React.FC<{ repo: KnowledgeRepo; onPRCreated: (pr: PRItem) => void }> = ({ repo, onPRCreated }) => {
+  const C = useTheme();
+  const blueLight = '#60a5fa';
+  const inputBg = C.bg;
   const [messages, setMessages] = useState<ChatMessage[]>(MOCK_CHAT_INIT);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -670,7 +657,7 @@ const ChatTab: React.FC<{ repo: KnowledgeRepo; onPRCreated: (pr: PRItem) => void
                   fontSize: 13, color: C.text, lineHeight: 1.65,
                 }}>
                   {msg.content.split('\n').map((line, i) => {
-                    const html = line.replace(/\*\*([^*]+)\*\*/g, `<strong style="color:${C.blueLight}">$1</strong>`).replace(/`([^`]+)`/g, `<code style="background:#0d1117;color:${C.green};padding:1px 5px;border-radius:4px;font-family:monospace;font-size:11px">$1</code>`);
+                    const html = line.replace(/\*\*([^*]+)\*\*/g, `<strong style="color:${blueLight}">$1</strong>`).replace(/`([^`]+)`/g, `<code style="background:${C.border};color:${C.green};padding:1px 5px;border-radius:4px;font-family:monospace;font-size:11px">$1</code>`);
                     return <p key={i} style={{ margin: i === 0 ? 0 : '4px 0 0' }} dangerouslySetInnerHTML={{ __html: html }} />;
                   })}
 
@@ -697,7 +684,7 @@ const ChatTab: React.FC<{ repo: KnowledgeRepo; onPRCreated: (pr: PRItem) => void
                   {msg.diffPreview && (
                     <div style={{ marginTop: 10 }}>
                       <div style={{ fontSize: 11, color: C.muted, marginBottom: 6, fontFamily: 'monospace' }}>📄 {msg.diffPreview.file}</div>
-                      <div style={{ background: '#0d1117', borderRadius: 6, padding: '10px 12px', fontFamily: 'monospace', fontSize: 12, lineHeight: 1.7 }}>
+                      <div style={{ background: C.sidebarBg, borderRadius: 6, padding: '10px 12px', fontFamily: 'monospace', fontSize: 12, lineHeight: 1.7 }}>
                         <div style={{ color: C.red }}>- {msg.diffPreview.before}</div>
                         {msg.diffPreview.after.split('\n').map((l, i) => <div key={i} style={{ color: C.green }}>+ {l}</div>)}
                       </div>
@@ -757,7 +744,7 @@ const ChatTab: React.FC<{ repo: KnowledgeRepo; onPRCreated: (pr: PRItem) => void
             onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()}
             placeholder="问一个问题，或说「帮我修改 xxx」…"
             style={{
-              flex: 1, background: C.input, border: `1px solid ${C.border}`,
+              flex: 1, background: inputBg, border: `1px solid ${C.border}`,
               borderRadius: 8, color: C.text, fontSize: 13, padding: '9px 14px', fontFamily: 'inherit',
             }}
           />
@@ -804,6 +791,7 @@ const ChatTab: React.FC<{ repo: KnowledgeRepo; onPRCreated: (pr: PRItem) => void
 
 // ─── Commits Tab ──────────────────────────────────────────────────
 const CommitsTab: React.FC<{ repo: KnowledgeRepo }> = ({ repo }) => {
+  const C = useTheme();
   const [expandedHash, setExpandedHash] = useState<string | null>(null);
   return (
     <div style={{ animation: 'fadeUp 0.3s ease' }}>
@@ -849,7 +837,7 @@ const CommitsTab: React.FC<{ repo: KnowledgeRepo }> = ({ repo }) => {
               </div>
               {expandedHash === commit.hash && (
                 <div style={{
-                  background: '#0d1117', border: `1px solid ${C.blue}`,
+                  background: C.sidebarBg, border: `1px solid ${C.blue}`,
                   borderTop: 'none', borderRadius: '0 0 8px 8px',
                   padding: '12px 14px', animation: 'fadeIn 0.2s ease',
                 }}>
@@ -874,6 +862,8 @@ const CommitsTab: React.FC<{ repo: KnowledgeRepo }> = ({ repo }) => {
 type DetailTab = 'docs' | 'prs' | 'members' | 'chat' | 'commits';
 
 const RepoDetail: React.FC<{ repo: KnowledgeRepo; onBack: () => void }> = ({ repo, onBack }) => {
+  const C = useTheme();
+  const blueLight = '#60a5fa';
   const [activeTab, setActiveTab] = useState<DetailTab>('docs');
   const [selectedFile, setSelectedFile] = useState<string | null>('README.md');
   const [selectedContent, setSelectedContent] = useState<string>(
@@ -972,7 +962,7 @@ const RepoDetail: React.FC<{ repo: KnowledgeRepo; onBack: () => void }> = ({ rep
                 background: 'transparent', border: 'none',
                 borderBottom: `2px solid ${active ? C.blue : 'transparent'}`,
                 padding: '10px 18px',
-                color: active ? C.blueLight : C.muted,
+                color: active ? blueLight : C.muted,
                 cursor: 'pointer', fontSize: 13,
                 fontWeight: active ? 700 : 400,
                 transition: 'color 0.15s, border-color 0.15s',
@@ -1082,7 +1072,7 @@ const RepoDetail: React.FC<{ repo: KnowledgeRepo; onBack: () => void }> = ({ rep
                   </div>
                   {expandedPR === pr.id && (
                     <div style={{
-                      background: '#0d1117', border: `1px solid ${C.blue}`,
+                      background: C.sidebarBg, border: `1px solid ${C.blue}`,
                       borderTop: 'none', borderRadius: '0 0 8px 8px',
                       padding: '16px', animation: 'fadeIn 0.2s ease',
                     }}>
@@ -1236,7 +1226,10 @@ const resolveGlobalAnswer = (input: string): { answer: string; sources: GlobalCh
 };
 
 // ─── Global Search Bar（对话式）──────────────────────────────────
-const GlobalSearchBar: React.FC<{ onEnterRepo: (repo: KnowledgeRepo) => void }> = ({ onEnterRepo }) => {
+const GlobalSearchBar: React.FC<{ onEnterRepo: (repo: KnowledgeRepo) => void; reposCount: number }> = ({ onEnterRepo, reposCount }) => {
+  const C = useTheme();
+  const purpleLight = '#a78bfa';
+  const inputBg = C.bg;
   const [expanded, setExpanded] = useState(false);
   const [messages, setMessages] = useState<GlobalChatMsg[]>([
     {
@@ -1277,8 +1270,8 @@ const GlobalSearchBar: React.FC<{ onEnterRepo: (repo: KnowledgeRepo) => void }> 
 
   const renderContent = (text: string) =>
     text
-      .replace(/\*\*([^*]+)\*\*/g, `<strong style="color:${C.purpleLight}">$1</strong>`)
-      .replace(/`([^`]+)`/g, `<code style="background:#0d1117;color:${C.green};padding:1px 5px;border-radius:4px;font-family:monospace;font-size:11px">$1</code>`);
+      .replace(/\*\*([^*]+)\*\*/g, `<strong style="color:${purpleLight}">$1</strong>`)
+      .replace(/`([^`]+)`/g, `<code style="background:${C.border};color:${C.green};padding:1px 5px;border-radius:4px;font-family:monospace;font-size:11px">$1</code>`);
 
   return (
     <div style={{
@@ -1293,9 +1286,9 @@ const GlobalSearchBar: React.FC<{ onEnterRepo: (repo: KnowledgeRepo) => void }> 
         onClick={() => setExpanded(e => !e)}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 16 }}>🔮</span>
+          <Sparkles size={16} />
           <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>跨库智能问答</span>
-          <span style={{ fontSize: 12, color: C.muted }}>— 搜遍全部 {MOCK_REPOS.length} 个知识库</span>
+          <span style={{ fontSize: 12, color: C.muted }}>— 搜遍全部 {reposCount} 个知识库</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {messages.length > 1 && (
@@ -1316,13 +1309,13 @@ const GlobalSearchBar: React.FC<{ onEnterRepo: (repo: KnowledgeRepo) => void }> 
               <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start', gap: 6 }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, flexDirection: msg.role === 'user' ? 'row-reverse' : 'row', maxWidth: '90%' }}>
                   {msg.role === 'assistant' && (
-                    <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, flexShrink: 0, marginTop: 2 }}>🔮</div>
+                    <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}><Sparkles size={14} /></div>
                   )}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: '100%' }}>
                     <div style={{
                       padding: '10px 14px',
                       borderRadius: msg.role === 'user' ? '12px 12px 4px 12px' : '12px 12px 12px 4px',
-                      background: msg.role === 'user' ? C.purple : '#0f1929',
+                      background: msg.role === 'user' ? C.purple : C.card,
                       border: msg.role === 'user' ? 'none' : `1px solid ${C.border}`,
                       fontSize: 13, color: C.text, lineHeight: 1.7,
                     }}>
@@ -1377,8 +1370,8 @@ const GlobalSearchBar: React.FC<{ onEnterRepo: (repo: KnowledgeRepo) => void }> 
             ))}
             {loading && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>🔮</div>
-                <div style={{ padding: '10px 14px', background: '#0f1929', border: `1px solid ${C.border}`, borderRadius: '12px 12px 12px 4px', fontSize: 13, color: C.muted }}>
+                <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Sparkles size={14} /></div>
+                <div style={{ padding: '10px 14px', background: C.card, border: `1px solid ${C.border}`, borderRadius: '12px 12px 12px 4px', fontSize: 13, color: C.muted }}>
                   正在检索全部知识库<span style={{ animation: 'fadeIn 1s infinite' }}>...</span>
                 </div>
               </div>
@@ -1405,7 +1398,7 @@ const GlobalSearchBar: React.FC<{ onEnterRepo: (repo: KnowledgeRepo) => void }> 
               onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()}
               placeholder="跨库提问，例如：所有架构知识库里关于限流的规范？"
               style={{
-                flex: 1, background: C.input, border: `1px solid ${C.border}`,
+                flex: 1, background: inputBg, border: `1px solid ${C.border}`,
                 borderRadius: 8, color: C.text, fontSize: 13,
                 padding: '9px 14px', fontFamily: 'inherit',
               }}
@@ -1432,7 +1425,7 @@ const GlobalSearchBar: React.FC<{ onEnterRepo: (repo: KnowledgeRepo) => void }> 
             onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()}
             placeholder="跨库提问，例如：所有架构知识库里关于限流的规范？"
             style={{
-              flex: 1, background: C.input, border: `1px solid ${C.border}`,
+              flex: 1, background: inputBg, border: `1px solid ${C.border}`,
               borderRadius: 8, color: C.text, fontSize: 13,
               padding: '9px 14px', fontFamily: 'inherit',
             }}
@@ -1450,14 +1443,186 @@ const GlobalSearchBar: React.FC<{ onEnterRepo: (repo: KnowledgeRepo) => void }> 
   );
 };
 
+// ─── Create Repo Modal ────────────────────────────────────────────
+const CreateRepoModal: React.FC<{
+  onClose: () => void;
+  onCreate: (repo: KnowledgeRepo) => void;
+}> = ({ onClose, onCreate }) => {
+  const C = useTheme();
+  const borderHover = C.border;
+  const inputBg = C.bg;
+  const [name, setName] = useState('');
+  const [desc, setDesc] = useState('');
+  const [typeKey, setTypeKey] = useState(KNOWLEDGE_TYPES[0].key);
+
+  const handleCreate = () => {
+    if (!name.trim()) return;
+    const cfg = getTypeConfig(typeKey);
+    const newRepo: KnowledgeRepo = {
+      id: Date.now(),
+      name: name.trim(),
+      typeKey,
+      desc: desc.trim() || `${cfg.label} - ${name.trim()}`,
+      owner: 'me',
+      ownerAvatar: '🧑‍💻',
+      memberCount: 1,
+      updatedAt: '刚刚',
+      docCount: 0,
+      prCount: 0,
+      isMine: true,
+      tree: [{ name: 'README.md', type: 'file', content: `# ${name.trim()}\n\n> 本知识库由我创建。\n` }],
+      members: [{ name: 'me', avatar: '🧑‍💻', role: 'Owner' }],
+      prs: [],
+      commits: [],
+    };
+    onCreate(newRepo);
+    onClose();
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 1000,
+        background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        animation: 'fadeIn 0.2s ease',
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          background: C.card, border: `1px solid ${borderHover}`,
+          borderRadius: 16, padding: '28px 32px', width: 480, maxWidth: '90vw',
+          animation: 'fadeUp 0.25s ease',
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
+          <BookOpen size={20} />
+          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: C.text }}>新建知识库</h2>
+        </div>
+
+        {/* Name */}
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: 'block', fontSize: 12, color: C.muted, fontWeight: 600, marginBottom: 6 }}>
+            知识库名称 *
+          </label>
+          <input
+            className="kn-input"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleCreate()}
+            placeholder="例如：支付核心系统知识库"
+            autoFocus
+            style={{
+              width: '100%', boxSizing: 'border-box',
+              background: inputBg, border: `1px solid ${C.border}`,
+              borderRadius: 8, color: C.text, fontSize: 13,
+              padding: '9px 12px', fontFamily: 'inherit',
+            }}
+          />
+        </div>
+
+        {/* Type */}
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: 'block', fontSize: 12, color: C.muted, fontWeight: 600, marginBottom: 8 }}>
+            知识库类型
+          </label>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {KNOWLEDGE_TYPES.map(t => (
+              <button
+                key={t.key}
+                onClick={() => setTypeKey(t.key)}
+                style={{
+                  background: typeKey === t.key ? `${t.color}18` : 'transparent',
+                  border: `1px solid ${typeKey === t.key ? t.color : C.border}`,
+                  borderRadius: 20, padding: '5px 12px',
+                  color: typeKey === t.key ? t.color : C.muted,
+                  cursor: 'pointer', fontSize: 12,
+                  fontWeight: typeKey === t.key ? 700 : 400,
+                  transition: 'all 0.15s',
+                }}
+              >
+                {t.icon} {t.label}
+              </button>
+            ))}
+          </div>
+          <div style={{ fontSize: 11, color: C.muted, marginTop: 8 }}>
+            {getTypeConfig(typeKey).desc}
+          </div>
+        </div>
+
+        {/* Desc */}
+        <div style={{ marginBottom: 24 }}>
+          <label style={{ display: 'block', fontSize: 12, color: C.muted, fontWeight: 600, marginBottom: 6 }}>
+            描述（可选）
+          </label>
+          <textarea
+            className="kn-input"
+            value={desc}
+            onChange={e => setDesc(e.target.value)}
+            placeholder="简要描述这个知识库的用途..."
+            rows={3}
+            style={{
+              width: '100%', boxSizing: 'border-box',
+              background: inputBg, border: `1px solid ${C.border}`,
+              borderRadius: 8, color: C.text, fontSize: 13,
+              padding: '9px 12px', fontFamily: 'inherit',
+              resize: 'vertical', minHeight: 72,
+            }}
+          />
+        </div>
+
+        {/* Buttons */}
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'transparent', border: `1px solid ${C.border}`,
+              borderRadius: 8, padding: '9px 20px',
+              color: C.muted, cursor: 'pointer', fontSize: 13,
+              transition: 'border-color 0.15s, color 0.15s',
+            }}
+          >
+            取消
+          </button>
+          <button
+            onClick={handleCreate}
+            disabled={!name.trim()}
+            style={{
+              background: name.trim() ? C.blue : C.border,
+              border: 'none', borderRadius: 8,
+              padding: '9px 20px', color: '#fff',
+              cursor: name.trim() ? 'pointer' : 'default',
+              fontSize: 13, fontWeight: 700,
+              transition: 'background 0.15s',
+            }}
+          >
+            创建知识库
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── List Page ────────────────────────────────────────────────────
-const RepoList: React.FC<{ onEnter: (repo: KnowledgeRepo) => void }> = ({ onEnter }) => {
+const RepoList: React.FC<{
+  repos: KnowledgeRepo[];
+  onEnter: (repo: KnowledgeRepo) => void;
+  onCreate: (repo: KnowledgeRepo) => void;
+}> = ({ repos, onEnter, onCreate }) => {
+  const C = useTheme();
+  const blueLight = '#60a5fa';
+  const purpleLight = '#a78bfa';
+  const inputBg = C.bg;
   const [tab, setTab] = useState<'mine' | 'all' | 'chat'>('mine');
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<'all' | KnowledgeCategory>('all');
   const [filterType, setFilterType] = useState<string>('all');
+  const [showCreate, setShowCreate] = useState(false);
 
-  const baseRepos = tab === 'mine' ? MOCK_REPOS.filter(r => r.isMine) : MOCK_REPOS;
+  const baseRepos = tab === 'mine' ? repos.filter(r => r.isMine) : repos;
   const filtered = baseRepos.filter(r => {
     const cfg = getTypeConfig(r.typeKey);
     const matchSearch = search.trim() === '' || r.name.includes(search) || r.desc.includes(search) || r.owner.includes(search);
@@ -1471,15 +1636,16 @@ const RepoList: React.FC<{ onEnter: (repo: KnowledgeRepo) => void }> = ({ onEnte
     : KNOWLEDGE_TYPES.filter(t => t.category === filterCategory);
 
   const LIST_TABS = [
-    { key: 'mine' as const,  label: '我的知识库', count: MOCK_REPOS.filter(r => r.isMine).length },
-    { key: 'all'  as const,  label: '全部知识库', count: MOCK_REPOS.length },
+    { key: 'mine' as const,  label: '我的知识库', count: repos.filter(r => r.isMine).length },
+    { key: 'all'  as const,  label: '全部知识库', count: repos.length },
     { key: 'chat' as const,  label: '💬 跨库对话', count: undefined },
   ];
 
   return (
     <div style={{ animation: 'fadeUp 0.4s ease' }}>
       {/* ── My / All / Chat Tab ── */}
-      <div style={{ display: 'flex', gap: 0, borderBottom: `1px solid ${C.border}`, marginBottom: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${C.border}`, marginBottom: 20 }}>
+        <div style={{ display: 'flex', gap: 0 }}>
         {LIST_TABS.map(({ key, label, count }) => {
           const active = tab === key;
           const isChat = key === 'chat';
@@ -1489,7 +1655,7 @@ const RepoList: React.FC<{ onEnter: (repo: KnowledgeRepo) => void }> = ({ onEnte
               style={{
                 background: 'transparent', border: 'none',
                 borderBottom: `2px solid ${active ? (isChat ? C.purple : C.blue) : 'transparent'}`,
-                padding: '10px 20px', color: active ? (isChat ? C.purpleLight : C.blueLight) : C.muted,
+                padding: '10px 20px', color: active ? (isChat ? purpleLight : blueLight) : C.muted,
                 cursor: 'pointer', fontSize: 14, fontWeight: active ? 700 : 400,
                 transition: 'color 0.15s, border-color 0.15s',
                 display: 'flex', alignItems: 'center', gap: 6,
@@ -1507,12 +1673,34 @@ const RepoList: React.FC<{ onEnter: (repo: KnowledgeRepo) => void }> = ({ onEnte
             </button>
           );
         })}
+        </div>
+        <button
+          className="kn-btn"
+          onClick={() => setShowCreate(true)}
+          style={{
+            background: C.blue, color: '#fff', border: 'none',
+            borderRadius: 8, padding: '7px 16px',
+            cursor: 'pointer', fontSize: 13, fontWeight: 700,
+            display: 'flex', alignItems: 'center', gap: 6,
+            marginBottom: 1,
+          }}
+        >
+          <span style={{ fontSize: 16, lineHeight: 1 }}>+</span> 新建知识库
+        </button>
       </div>
+
+      {/* ── Create Modal ── */}
+      {showCreate && (
+        <CreateRepoModal
+          onClose={() => setShowCreate(false)}
+          onCreate={repo => { onCreate(repo); setTab('mine'); }}
+        />
+      )}
 
       {/* ── Chat Tab 内容 ── */}
       {tab === 'chat' && (
         <div style={{ animation: 'fadeUp 0.3s ease' }}>
-          <GlobalSearchBar onEnterRepo={onEnter} />
+          <GlobalSearchBar onEnterRepo={onEnter} reposCount={repos.length} />
         </div>
       )}
       {tab === 'chat' && null /* 后续 return 提前退出 */}
@@ -1522,7 +1710,7 @@ const RepoList: React.FC<{ onEnter: (repo: KnowledgeRepo) => void }> = ({ onEnte
       <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
         {/* Search */}
         <div style={{ position: 'relative', flex: '1 1 220px', minWidth: 180 }}>
-          <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 13, color: C.muted }}>🔍</span>
+          <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: C.muted, display: 'flex' }}><Search size={13} /></span>
           <input
             className="kn-input"
             value={search}
@@ -1530,7 +1718,7 @@ const RepoList: React.FC<{ onEnter: (repo: KnowledgeRepo) => void }> = ({ onEnte
             placeholder="搜索知识库名称、描述..."
             style={{
               width: '100%', boxSizing: 'border-box',
-              background: C.input, border: `1px solid ${C.border}`,
+              background: inputBg, border: `1px solid ${C.border}`,
               borderRadius: 8, color: C.text, fontSize: 13,
               padding: '8px 12px 8px 32px', fontFamily: 'inherit',
               transition: 'border-color 0.2s, box-shadow 0.2s',
@@ -1551,7 +1739,7 @@ const RepoList: React.FC<{ onEnter: (repo: KnowledgeRepo) => void }> = ({ onEnte
                 background: filterCategory === key ? 'rgba(59,130,246,0.12)' : 'transparent',
                 border: `1px solid ${filterCategory === key ? C.blue : C.border}`,
                 borderRadius: 20, padding: '5px 12px',
-                color: filterCategory === key ? C.blueLight : C.muted,
+                color: filterCategory === key ? blueLight : C.muted,
                 cursor: 'pointer', fontSize: 12, fontWeight: filterCategory === key ? 700 : 400,
               }}
             >
@@ -1669,15 +1857,21 @@ const RepoList: React.FC<{ onEnter: (repo: KnowledgeRepo) => void }> = ({ onEnte
 
 // ─── Main Component ───────────────────────────────────────────────
 const KnowledgePage: React.FC = () => {
+  const C = useTheme();
   const [selectedRepo, setSelectedRepo] = useState<KnowledgeRepo | null>(null);
+  const [repos, setRepos] = useState<KnowledgeRepo[]>(MOCK_REPOS);
 
   useEffect(() => {
     injectStyles();
   }, []);
 
-  const totalRepos = MOCK_REPOS.length;
-  const totalDocs = MOCK_REPOS.reduce((s, r) => s + r.docCount, 0);
-  const openPRs = MOCK_REPOS.reduce((s, r) => s + r.prs.filter(p => p.status === 'open').length, 0);
+  const handleCreateRepo = (repo: KnowledgeRepo) => {
+    setRepos(prev => [repo, ...prev]);
+  };
+
+  const totalRepos = repos.length;
+  const totalDocs = repos.reduce((s, r) => s + r.docCount, 0);
+  const openPRs = repos.reduce((s, r) => s + r.prs.filter(p => p.status === 'open').length, 0);
 
   return (
     <div style={{ minHeight: '100vh', background: C.bg, color: C.text, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
@@ -1692,9 +1886,9 @@ const KnowledgePage: React.FC = () => {
             <div style={{
               width: 40, height: 40, borderRadius: 10,
               background: 'rgba(59,130,246,0.15)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              🧠
+              <Brain size={20} />
             </div>
             <div>
               <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: C.text }}>EvolveBase 知识库</h1>
@@ -1722,7 +1916,7 @@ const KnowledgePage: React.FC = () => {
         {selectedRepo ? (
           <RepoDetail repo={selectedRepo} onBack={() => setSelectedRepo(null)} />
         ) : (
-          <RepoList onEnter={setSelectedRepo} />
+          <RepoList repos={repos} onEnter={setSelectedRepo} onCreate={handleCreateRepo} />
         )}
       </div>
     </div>

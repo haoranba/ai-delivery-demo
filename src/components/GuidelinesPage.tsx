@@ -1,28 +1,14 @@
 import React, { useState } from 'react';
-
-// ─── Style tokens ─────────────────────────────────────────────────────────────
-
-const C = {
-  bg:     '#0a0f1e',
-  card:   '#1a2235',
-  border: '#1e2d45',
-  text:   '#f1f5f9',
-  muted:  '#94a3b8',
-  blue:   '#3b82f6',
-  green:  '#10b981',
-  purple: '#8b5cf6',
-  orange: '#f59e0b',
-  red:    '#ef4444',
-  radius: '12px',
-} as const;
+import { FileEdit, CheckCircle, CreditCard, FileText, ShieldOff, ShieldCheck, Lock, AlertTriangle, Ban } from 'lucide-react';
+import { useTheme } from '../ThemeContext';
 
 // ─── Procurement Tab ──────────────────────────────────────────────────────────
 
 const steps = [
-  { num: 1, icon: '📝', title: '提交申请', desc: '在内部系统填写工具申请表，说明使用场景和预算' },
-  { num: 2, icon: '✅', title: '部门审批', desc: '部门负责人在5个工作日内审批，超额需额外审批' },
-  { num: 3, icon: '💳', title: '财务采购', desc: '财务统一采购，避免个人付款，保留发票' },
-  { num: 4, icon: '📄', title: '报销凭证', desc: '提交发票和使用说明，按季度报销' },
+  { num: 1, icon: <FileEdit size={24} />,    title: '提交申请', desc: '在内部系统填写工具申请表，说明使用场景和预算' },
+  { num: 2, icon: <CheckCircle size={24} />, title: '部门审批', desc: '部门负责人在5个工作日内审批，超额需额外审批' },
+  { num: 3, icon: <CreditCard size={24} />,  title: '财务采购', desc: '财务统一采购，避免个人付款，保留发票' },
+  { num: 4, icon: <FileText size={24} />,    title: '报销凭证', desc: '提交发票和使用说明，按季度报销' },
 ];
 
 const tableData = [
@@ -48,6 +34,7 @@ const faqs = [
 ];
 
 const ProcurementTab: React.FC = () => {
+  const C = useTheme();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   return (
@@ -86,7 +73,7 @@ const ProcurementTab: React.FC = () => {
                 }}>
                   {step.num}
                 </div>
-                <span style={{ fontSize: '24px' }}>{step.icon}</span>
+                <div style={{ color: C.blue }}>{step.icon}</div>
                 <div style={{ fontSize: '14px', fontWeight: 600, color: C.text }}>{step.title}</div>
                 <div style={{ fontSize: '12px', color: C.muted, lineHeight: 1.6 }}>{step.desc}</div>
               </div>
@@ -247,18 +234,21 @@ const recommended = [
   '发现安全问题及时上报安全团队',
 ];
 
-const dataLevels = [
-  { level: 'L1', label: '公开数据',   desc: '可直接输入AI工具，无限制',                   color: C.green  },
-  { level: 'L2', label: '内部数据',   desc: '需脱敏后使用，建议内部工具',                 color: C.blue   },
-  { level: 'L3', label: '敏感数据',   desc: '禁止输入外部AI，仅限内部工具',               color: C.orange },
-  { level: 'L4', label: '机密数据',   desc: '禁止任何AI工具处理，需人工处理',             color: C.red    },
-];
+const SecurityTab: React.FC = () => {
+  const C = useTheme();
 
-const SecurityTab: React.FC = () => (
+  const dataLevels = [
+    { level: 'L1', label: '公开数据',   desc: '可直接输入AI工具，无限制',                   color: C.green  },
+    { level: 'L2', label: '内部数据',   desc: '需脱敏后使用，建议内部工具',                 color: C.blue   },
+    { level: 'L3', label: '敏感数据',   desc: '禁止输入外部AI，仅限内部工具',               color: C.orange },
+    { level: 'L4', label: '机密数据',   desc: '禁止任何AI工具处理，需人工处理',             color: C.red    },
+  ];
+
+  return (
   <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
     {/* Forbidden */}
     <section>
-      <SectionTitle>🚫 禁止事项</SectionTitle>
+      <SectionTitle><ShieldOff size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} />禁止事项</SectionTitle>
       <div style={{
         marginTop: '16px',
         backgroundColor: `${C.red}0d`,
@@ -271,9 +261,9 @@ const SecurityTab: React.FC = () => (
       }}>
         {forbidden.map((item, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-            <span style={{ fontSize: '16px', flexShrink: 0, marginTop: '1px' }}>⚠️</span>
+            <AlertTriangle size={16} style={{ color: C.orange, flexShrink: 0, marginTop: '2px' }} />
             <span style={{ fontSize: '14px', color: '#fca5a5', lineHeight: 1.6 }}>
-              <span style={{ fontWeight: 600, color: C.red, marginRight: '4px' }}>🚫</span>
+              <Ban size={14} style={{ color: C.red, marginRight: '4px', verticalAlign: 'middle' }} />
               {item}
             </span>
           </div>
@@ -283,7 +273,7 @@ const SecurityTab: React.FC = () => (
 
     {/* Recommended */}
     <section>
-      <SectionTitle>✅ 推荐做法</SectionTitle>
+      <SectionTitle><ShieldCheck size={16} style={{ marginRight: '6px', verticalAlign: 'middle' }} />推荐做法</SectionTitle>
       <div style={{
         marginTop: '16px',
         backgroundColor: `${C.green}0d`,
@@ -296,7 +286,7 @@ const SecurityTab: React.FC = () => (
       }}>
         {recommended.map((item, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-            <span style={{ fontSize: '16px', flexShrink: 0, marginTop: '1px' }}>✅</span>
+            <CheckCircle size={16} style={{ color: C.green, flexShrink: 0, marginTop: '2px' }} />
             <span style={{ fontSize: '14px', color: '#6ee7b7', lineHeight: 1.6 }}>{item}</span>
           </div>
         ))}
@@ -349,20 +339,25 @@ const SecurityTab: React.FC = () => (
       </div>
     </section>
   </div>
-);
+  );
+};
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
-const SectionTitle: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-    <div style={{ width: '3px', height: '18px', backgroundColor: C.blue, borderRadius: '2px', flexShrink: 0 }} />
-    <h2 style={{ fontSize: '16px', fontWeight: 700, color: C.text, margin: 0 }}>{children}</h2>
-  </div>
-);
+const SectionTitle: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const C = useTheme();
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+      <div style={{ width: '3px', height: '18px', backgroundColor: C.blue, borderRadius: '2px', flexShrink: 0 }} />
+      <h2 style={{ fontSize: '16px', fontWeight: 700, color: C.text, margin: 0, display: 'flex', alignItems: 'center' }}>{children}</h2>
+    </div>
+  );
+};
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const GuidelinesPage: React.FC = () => {
+  const C = useTheme();
   const [activeTab, setActiveTab] = useState<'procurement' | 'security'>('procurement');
 
   return (
@@ -385,8 +380,8 @@ const GuidelinesPage: React.FC = () => {
         marginBottom: '32px',
       }}>
         {([
-          { key: 'procurement', label: '采买报销流程', icon: '💳' },
-          { key: 'security',    label: '安全使用规范', icon: '🔒' },
+          { key: 'procurement', label: '采买报销流程', icon: <CreditCard size={15} /> },
+          { key: 'security',    label: '安全使用规范', icon: <Lock size={15} /> },
         ] as const).map(({ key, label, icon }) => {
           const active = activeTab === key;
           return (
@@ -408,7 +403,7 @@ const GuidelinesPage: React.FC = () => {
                 gap: '6px',
               }}
             >
-              <span>{icon}</span>
+              {icon}
               {label}
             </button>
           );

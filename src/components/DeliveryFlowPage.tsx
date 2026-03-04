@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { ClipboardList, Palette, Building2, BarChart2, Monitor, Settings, Hash, TestTube2, Rocket, Link2, PencilLine, GitMerge, Lock, Handshake, Zap } from 'lucide-react'
+import { useTheme } from '../ThemeContext'
+import type { ColorTokens } from '../ThemeContext'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -8,7 +11,7 @@ type ExecMode = 'human' | 'agent' | null
 interface FlowNode {
   id: string
   label: string
-  icon: string
+  icon: React.ReactElement
   desc: string
   platform?: string
   agentName?: string
@@ -53,61 +56,78 @@ function parseDimaUrl(url: string): ParsedReq {
   return samples[keys[parseInt(id, 10) % keys.length]] || samples.default
 }
 
-function buildNodes(req: ParsedReq): FlowNode[] {
+function parseTextDesc(text: string): ParsedReq {
+  const priorityMatch = text.match(/\b(P0|P1|P2|P3)\b/i)
+  const priority = priorityMatch ? priorityMatch[1].toUpperCase() : 'P1'
+  const deadlineMatch = text.match(/(\d{4}[-/]\d{1,2}[-/]\d{1,2})/)
+  const deadline = deadlineMatch ? deadlineMatch[1].replace(/\//g, '-') : '2026-04-15'
+  const firstLine = text.split('\n')[0].trim()
+  const title = firstLine.length > 18 ? firstLine.slice(0, 18) + '…' : firstLine || '自定义需求'
+  return {
+    title,
+    owner: '当前用户',
+    priority,
+    deadline,
+    tags: ['自定义'],
+    summary: text.slice(0, 300),
+  }
+}
+
+function buildNodes(req: ParsedReq, C: ColorTokens): FlowNode[] {
   return [
     {
-      id: 'req', label: '需求分析', icon: '📋',
-      desc: `解析 Dima 需求，拆解用户故事\n「${req.title}」`,
+      id: 'req', label: '需求分析', icon: <ClipboardList size={18} />,
+      desc: `解析需求，拆解用户故事\n「${req.title}」`,
       platform: 'Speco', agentName: 'Speco Agent',
-      status: 'done', mode: null, row: 0, color: '#8b5cf6',
+      status: 'done', mode: null, row: 0, color: C.purple,
     },
     {
-      id: 'design_ui', label: 'UI 设计', icon: '🎨',
+      id: 'design_ui', label: 'UI 设计', icon: <Palette size={18} />,
       desc: '交互稿、视觉规范、D2C 还原',
       platform: 'Muse', agentName: 'Muse Agent',
       status: 'active', mode: null, row: 1, parallel: true, color: '#ec4899',
     },
     {
-      id: 'design_arch', label: '架构设计', icon: '🏗️',
+      id: 'design_arch', label: '架构设计', icon: <Building2 size={18} />,
       desc: '系统架构、接口设计、数据模型',
       platform: 'Speco', agentName: 'Speco Agent',
-      status: 'active', mode: null, row: 1, parallel: true, color: '#3b82f6',
+      status: 'active', mode: null, row: 1, parallel: true, color: C.blue,
     },
     {
-      id: 'design_data', label: '数据方案', icon: '📊',
+      id: 'design_data', label: '数据方案', icon: <BarChart2 size={18} />,
       desc: '埋点方案、指标设计、看板',
       platform: 'Dataflow', agentName: 'Dataflow Agent',
-      status: 'active', mode: null, row: 1, parallel: true, color: '#f59e0b',
+      status: 'active', mode: null, row: 1, parallel: true, color: C.orange,
     },
     {
-      id: 'dev_fe', label: '前端开发', icon: '🖥️',
+      id: 'dev_fe', label: '前端开发', icon: <Monitor size={18} />,
       desc: 'React 组件开发，集成内部组件库',
       platform: 'Neo', agentName: 'Neo Agent',
-      status: 'pending', mode: null, row: 2, parallel: true, color: '#10b981',
+      status: 'pending', mode: null, row: 2, parallel: true, color: C.green,
     },
     {
-      id: 'dev_be', label: '后端开发', icon: '⚙️',
+      id: 'dev_be', label: '后端开发', icon: <Settings size={18} />,
       desc: 'Java 服务，接入 RPC/ORM 框架',
       platform: 'Maco', agentName: 'Maco Agent',
-      status: 'pending', mode: null, row: 2, parallel: true, color: '#10b981',
+      status: 'pending', mode: null, row: 2, parallel: true, color: C.green,
     },
     {
-      id: 'dev_data', label: '数据开发', icon: '🔢',
+      id: 'dev_data', label: '数据开发', icon: <Hash size={18} />,
       desc: 'SQL/Pipeline，实时离线任务',
       platform: 'Dataflow', agentName: 'Dataflow Agent',
-      status: 'pending', mode: null, row: 2, parallel: true, color: '#10b981',
+      status: 'pending', mode: null, row: 2, parallel: true, color: C.green,
     },
     {
-      id: 'test', label: '测试验证', icon: '🧪',
+      id: 'test', label: '测试验证', icon: <TestTube2 size={18} />,
       desc: '单测/接口/UI 测试，缺陷管理',
       platform: 'DeepTest', agentName: 'DeepTest Agent',
-      status: 'pending', mode: null, row: 3, color: '#f59e0b',
+      status: 'pending', mode: null, row: 3, color: C.orange,
     },
     {
-      id: 'deploy', label: '发布上线', icon: '🚀',
+      id: 'deploy', label: '发布上线', icon: <Rocket size={18} />,
       desc: '灰度发布、监控验证、回滚预案',
       platform: '发布平台', agentName: 'Deploy Agent',
-      status: 'pending', mode: null, row: 4, color: '#ef4444',
+      status: 'pending', mode: null, row: 4, color: C.red,
     },
   ]
 }
@@ -121,22 +141,22 @@ const initialGates: ReviewGate[] = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const statusStyle = (s: NodeStatus): React.CSSProperties => ({
-  done:      { background: 'rgba(16,185,129,0.12)', border: '1.5px solid #10b981' },
-  active:    { background: 'rgba(59,130,246,0.12)', border: '1.5px solid #3b82f6' },
-  pending:   { background: 'rgba(148,163,184,0.06)', border: '1.5px solid #1e2d45' },
-  blocked:   { background: 'rgba(239,68,68,0.12)', border: '1.5px solid #ef4444' },
-  reviewing: { background: 'rgba(245,158,11,0.12)', border: '1.5px solid #f59e0b' },
+const makeStatusStyle = (C: ColorTokens) => (s: NodeStatus): React.CSSProperties => ({
+  done:      { background: `${C.green}1f`, border: `1.5px solid ${C.green}` },
+  active:    { background: `${C.blue}1f`, border: `1.5px solid ${C.blue}` },
+  pending:   { background: `${C.muted}0f`, border: `1.5px solid ${C.border}` },
+  blocked:   { background: `${C.red}1f`, border: `1.5px solid ${C.red}` },
+  reviewing: { background: `${C.orange}1f`, border: `1.5px solid ${C.orange}` },
 }[s])
 
 const statusLabel: Record<NodeStatus, string> = {
   done: '✅ 完成', active: '🔵 进行中', pending: '⏳ 待开始', blocked: '🔴 阻塞', reviewing: '🟡 评审中',
 }
-const statusColor: Record<NodeStatus, string> = {
-  done: '#10b981', active: '#3b82f6', pending: '#475569', blocked: '#ef4444', reviewing: '#f59e0b',
-}
+const makeStatusColor = (C: ColorTokens): Record<NodeStatus, string> => ({
+  done: C.green, active: C.blue, pending: '#475569', blocked: C.red, reviewing: C.orange,
+})
 
-const gateColor = { pass: '#10b981', pending: '#f59e0b', reject: '#ef4444' }
+const makeGateColor = (C: ColorTokens) => ({ pass: C.green, pending: C.orange, reject: C.red })
 const gateLabel = { pass: '✅ 已通过', pending: '🟡 待评审', reject: '❌ 已打回' }
 
 // ─── Gate Detail Panel Data ───────────────────────────────────────────────────
@@ -204,31 +224,32 @@ const gateDetails: Record<string, GateDetail> = {
 // ─── PRD Document Card ────────────────────────────────────────────────────────
 
 function PrdCard() {
+  const C = useTheme()
   return (
     <div style={{
-      background: '#0a0f1e', border: '1px solid #1e2d45', borderRadius: 10,
+      background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10,
       padding: '14px 16px', fontSize: 12,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
         <span style={{ fontSize: 16 }}>📄</span>
         <div>
-          <div style={{ color: '#f1f5f9', fontWeight: 700, fontSize: 13 }}>红包活动发放系统 PRD v2.1</div>
+          <div style={{ color: C.text, fontWeight: 700, fontSize: 13 }}>红包活动发放系统 PRD v2.1</div>
           <div style={{ color: '#475569', fontSize: 10, marginTop: 1 }}>最后更新：2026-03-04 · 作者：陈晓明 · 约 4,820 字</div>
         </div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {[
-          { no: '1', title: '背景与目标', words: '420字', color: '#8b5cf6' },
-          { no: '2', title: '用户故事与场景', words: '1,240字', color: '#3b82f6' },
-          { no: '3', title: '功能需求详述', words: '1,860字', color: '#10b981' },
-          { no: '4', title: '非功能需求（性能/安全/合规）', words: '680字', color: '#f59e0b' },
+          { no: '1', title: '背景与目标', words: '420字', color: C.purple },
+          { no: '2', title: '用户故事与场景', words: '1,240字', color: C.blue },
+          { no: '3', title: '功能需求详述', words: '1,860字', color: C.green },
+          { no: '4', title: '非功能需求（性能/安全/合规）', words: '680字', color: C.orange },
           { no: '5', title: '验收标准 & 测试用例清单', words: '620字', color: '#ec4899' },
 
         ].map(sec => (
           <div key={sec.no} style={{
             display: 'flex', alignItems: 'center', gap: 8,
             padding: '7px 10px', borderRadius: 6,
-            background: '#1a2235', border: '1px solid #1e2d45',
+            background: C.card, border: `1px solid ${C.border}`,
           }}>
             <span style={{
               width: 18, height: 18, borderRadius: 4, background: `${sec.color}22`,
@@ -236,7 +257,7 @@ function PrdCard() {
               fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0,
             }}>{sec.no}</span>
-            <span style={{ flex: 1, color: '#94a3b8' }}>{sec.title}</span>
+            <span style={{ flex: 1, color: C.muted }}>{sec.title}</span>
             <span style={{ color: '#475569', fontSize: 10 }}>{sec.words}</span>
           </div>
         ))}
@@ -248,27 +269,28 @@ function PrdCard() {
 // ─── Tech Doc Card ────────────────────────────────────────────────────────────
 
 function TechDocCard() {
+  const C = useTheme()
   return (
     <div style={{
-      background: '#0a0f1e', border: '1px solid #1e2d45', borderRadius: 10,
+      background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10,
       padding: '14px 16px', fontSize: 12,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
         <span style={{ fontSize: 16 }}>🏗️</span>
         <div>
-          <div style={{ color: '#f1f5f9', fontWeight: 700, fontSize: 13 }}>技术方案文档 v1.0</div>
+          <div style={{ color: C.text, fontWeight: 700, fontSize: 13 }}>技术方案文档 v1.0</div>
           <div style={{ color: '#475569', fontSize: 10, marginTop: 1 }}>Speco Agent 生成 · 2026-03-04 14:15</div>
         </div>
       </div>
       {/* 架构图描述 */}
-      <div style={{ background: '#1a2235', border: '1px solid #1e2d45', borderRadius: 8, padding: '10px 12px', marginBottom: 10 }}>
+      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, padding: '10px 12px', marginBottom: 10 }}>
         <div style={{ color: '#64748b', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', marginBottom: 8 }}>ARCHITECTURE OVERVIEW</div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0, flexWrap: 'wrap' }}>
           {[
             { label: 'H5 / App', color: '#ec4899' },
-            { label: 'API Gateway', color: '#8b5cf6' },
-            { label: 'Activity\nService', color: '#3b82f6' },
-            { label: 'Risk\nService', color: '#ef4444' },
+            { label: 'API Gateway', color: C.purple },
+            { label: 'Activity\nService', color: C.blue },
+            { label: 'Risk\nService', color: C.red },
           ].map((box, i, arr) => (
             <React.Fragment key={box.label}>
               <div style={{
@@ -284,8 +306,8 @@ function TechDocCard() {
         </div>
         <div style={{ display: 'flex', gap: 8, marginTop: 8, justifyContent: 'center' }}>
           {[
-            { label: 'MySQL 主从', color: '#f59e0b' },
-            { label: 'Redis Cluster', color: '#10b981' },
+            { label: 'MySQL 主从', color: C.orange },
+            { label: 'Redis Cluster', color: C.green },
             { label: 'MQ (异步)', color: '#64748b' },
           ].map(box => (
             <div key={box.label} style={{
@@ -306,14 +328,14 @@ function TechDocCard() {
         ].map(api => (
           <div key={api.path} style={{
             display: 'flex', alignItems: 'center', gap: 8,
-            padding: '5px 8px', borderRadius: 5, background: '#0d1526',
+            padding: '5px 8px', borderRadius: 5, background: C.sidebarBg,
           }}>
             <span style={{
               fontSize: 9, padding: '1px 5px', borderRadius: 3, fontWeight: 700, fontFamily: 'monospace',
-              background: api.method === 'POST' ? 'rgba(59,130,246,0.2)' : 'rgba(16,185,129,0.2)',
+              background: api.method === 'POST' ? `${C.blue}33` : `${C.green}33`,
               color: api.method === 'POST' ? '#60a5fa' : '#34d399',
             }}>{api.method}</span>
-            <span style={{ fontFamily: 'monospace', color: '#94a3b8', fontSize: 11, flex: 1 }}>{api.path}</span>
+            <span style={{ fontFamily: 'monospace', color: C.muted, fontSize: 11, flex: 1 }}>{api.path}</span>
             <span style={{ color: '#475569', fontSize: 10 }}>{api.desc}</span>
           </div>
         ))}
@@ -325,6 +347,7 @@ function TechDocCard() {
 // ─── Code Diff Card ───────────────────────────────────────────────────────────
 
 function DiffCard() {
+  const C = useTheme()
   const diffLines = [
     { type: 'meta', text: 'diff --git a/ActivityService.java b/ActivityService.java' },
     { type: 'meta', text: '@@ -142,8 +142,14 @@ public class ActivityService {' },
@@ -349,26 +372,26 @@ function DiffCard() {
 
   const lineColor: Record<string, string> = {
     meta: '#64748b',
-    ctx:  '#94a3b8',
+    ctx:  C.muted,
     del:  '#fca5a5',
     add:  '#86efac',
   }
   const lineBg: Record<string, string> = {
     meta: 'transparent',
     ctx:  'transparent',
-    del:  'rgba(239,68,68,0.08)',
-    add:  'rgba(16,185,129,0.08)',
+    del:  `${C.red}14`,
+    add:  `${C.green}14`,
   }
 
   return (
     <div style={{
-      background: '#0a0f1e', border: '1px solid #1e2d45', borderRadius: 10,
+      background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10,
       padding: '14px 16px', fontSize: 12,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
         <span style={{ fontSize: 16 }}>🔀</span>
         <div>
-          <div style={{ color: '#f1f5f9', fontWeight: 700, fontSize: 13 }}>PR #247 · feature/activity → main</div>
+          <div style={{ color: C.text, fontWeight: 700, fontSize: 13 }}>PR #247 · feature/activity → main</div>
           <div style={{ color: '#475569', fontSize: 10, marginTop: 1 }}>
             <span style={{ color: '#86efac' }}>+312</span>
             <span style={{ color: '#475569' }}> / </span>
@@ -378,7 +401,7 @@ function DiffCard() {
         </div>
       </div>
       <div style={{
-        background: '#070c18', border: '1px solid #1e2d45', borderRadius: 8,
+        background: C.sidebarBg, border: `1px solid ${C.border}`, borderRadius: 8,
         overflow: 'hidden', fontFamily: '"JetBrains Mono", "Fira Code", "Cascadia Code", monospace',
       }}>
         {diffLines.map((line, i) => (
@@ -386,7 +409,7 @@ function DiffCard() {
             display: 'flex', alignItems: 'center',
             background: lineBg[line.type],
             padding: '1px 12px',
-            borderBottom: i < diffLines.length - 1 ? '1px solid rgba(30,45,69,0.3)' : 'none',
+            borderBottom: i < diffLines.length - 1 ? `1px solid ${C.border}4d` : 'none',
           }}>
             <span style={{ color: lineColor[line.type], fontSize: 11, whiteSpace: 'pre', lineHeight: 1.7 }}>
               {line.text}
@@ -401,6 +424,7 @@ function DiffCard() {
 // ─── Online Checklist Card ────────────────────────────────────────────────────
 
 function OnlineChecklistCard() {
+  const C = useTheme()
   const [checked, setChecked] = useState<Record<string, boolean>>({
     gray: true, rollback: true, monitor: true, perf: true,
   })
@@ -432,20 +456,20 @@ function OnlineChecklistCard() {
 
   return (
     <div style={{
-      background: '#0a0f1e', border: '1px solid #1e2d45', borderRadius: 10,
+      background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10,
       padding: '14px 16px', fontSize: 12,
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
         <span style={{ fontSize: 16 }}>📋</span>
         <div style={{ flex: 1 }}>
-          <div style={{ color: '#f1f5f9', fontWeight: 700, fontSize: 13 }}>上线 Checklist · 灰度发布方案</div>
+          <div style={{ color: C.text, fontWeight: 700, fontSize: 13 }}>上线 Checklist · 灰度发布方案</div>
           <div style={{ color: '#475569', fontSize: 10, marginTop: 1 }}>Deploy Agent 生成 · 2026-03-04 22:30</div>
         </div>
         <div style={{
           fontSize: 10, padding: '2px 8px', borderRadius: 10, fontWeight: 700,
-          background: allChecked ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)',
-          color: allChecked ? '#10b981' : '#f59e0b',
-          border: `1px solid ${allChecked ? '#10b98144' : '#f59e0b44'}`,
+          background: allChecked ? `${C.green}26` : `${C.orange}26`,
+          color: allChecked ? C.green : C.orange,
+          border: `1px solid ${allChecked ? `${C.green}44` : `${C.orange}44`}`,
         }}>
           {Object.values(checked).filter(Boolean).length}/{items.length} 完成
         </div>
@@ -458,16 +482,16 @@ function OnlineChecklistCard() {
             style={{
               display: 'flex', alignItems: 'flex-start', gap: 10,
               padding: '10px 12px', borderRadius: 8, cursor: 'pointer',
-              background: checked[item.key] ? 'rgba(16,185,129,0.07)' : '#1a2235',
-              border: `1px solid ${checked[item.key] ? '#10b98133' : '#1e2d45'}`,
+              background: checked[item.key] ? `${C.green}12` : C.card,
+              border: `1px solid ${checked[item.key] ? `${C.green}33` : C.border}`,
               transition: 'all 0.2s',
             }}
           >
             {/* Checkbox */}
             <div style={{
               width: 16, height: 16, borderRadius: 4, flexShrink: 0, marginTop: 1,
-              background: checked[item.key] ? '#10b981' : 'transparent',
-              border: `1.5px solid ${checked[item.key] ? '#10b981' : '#334155'}`,
+              background: checked[item.key] ? C.green : 'transparent',
+              border: `1.5px solid ${checked[item.key] ? C.green : '#334155'}`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               transition: 'all 0.15s',
             }}>
@@ -481,7 +505,7 @@ function OnlineChecklistCard() {
             <div style={{ flex: 1 }}>
               <div style={{
                 fontWeight: 600, fontSize: 12, marginBottom: 2,
-                color: checked[item.key] ? '#94a3b8' : '#f1f5f9',
+                color: checked[item.key] ? C.muted : C.text,
                 textDecoration: checked[item.key] ? 'none' : 'none',
               }}>{item.label}</div>
               <div style={{ color: '#475569', fontSize: 11, lineHeight: 1.4 }}>{item.desc}</div>
@@ -502,6 +526,7 @@ function GateDetailPanel({ gate, detail, onClose, onApprove, onReject }: {
   onApprove: () => void
   onReject: () => void
 }) {
+  const C = useTheme()
   const panelRef = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
 
@@ -511,6 +536,7 @@ function GateDetailPanel({ gate, detail, onClose, onApprove, onReject }: {
     return () => cancelAnimationFrame(t)
   }, [])
 
+  const gateColor = makeGateColor(C)
   const gc = gateColor[gate.status]
 
   return (
@@ -526,9 +552,9 @@ function GateDetailPanel({ gate, detail, onClose, onApprove, onReject }: {
       }}
     >
       <div style={{
-        background: '#0d1526',
+        background: C.sidebarBg,
         border: `1px solid ${gc}44`,
-        borderRadius: 12,
+        borderRadius: C.radius,
         marginTop: 10,
         overflow: 'hidden',
         boxShadow: `0 4px 24px rgba(0,0,0,0.3), 0 0 0 1px ${gc}22`,
@@ -541,7 +567,7 @@ function GateDetailPanel({ gate, detail, onClose, onApprove, onReject }: {
           display: 'flex', alignItems: 'center', gap: 10,
         }}>
           <div style={{ flex: 1 }}>
-            <div style={{ color: '#f1f5f9', fontWeight: 700, fontSize: 13 }}>
+            <div style={{ color: C.text, fontWeight: 700, fontSize: 13 }}>
               {detail.deliverableTitle}
             </div>
             <div style={{ color: '#475569', fontSize: 10, marginTop: 2 }}>
@@ -577,13 +603,13 @@ function GateDetailPanel({ gate, detail, onClose, onApprove, onReject }: {
                 <div key={c.label} style={{
                   display: 'flex', alignItems: 'center', gap: 5,
                   padding: '5px 10px', borderRadius: 8,
-                  background: c.status === 'ok' ? 'rgba(16,185,129,0.08)' : 'rgba(245,158,11,0.08)',
-                  border: `1px solid ${c.status === 'ok' ? '#10b98133' : '#f59e0b33'}`,
+                  background: c.status === 'ok' ? `${C.green}14` : `${C.orange}14`,
+                  border: `1px solid ${c.status === 'ok' ? `${C.green}33` : `${C.orange}33`}`,
                 }}>
                   <span style={{ fontSize: 12 }}>{c.icon}</span>
                   <span style={{
                     fontSize: 11, fontWeight: 600,
-                    color: c.status === 'ok' ? '#10b981' : '#f59e0b',
+                    color: c.status === 'ok' ? C.green : C.orange,
                   }}>{c.label}</span>
                 </div>
               ))}
@@ -593,16 +619,16 @@ function GateDetailPanel({ gate, detail, onClose, onApprove, onReject }: {
           {/* Actions */}
           <div style={{ display: 'flex', gap: 8, marginTop: 14, justifyContent: 'flex-end' }}>
             <button onClick={onClose} style={{
-              padding: '6px 14px', borderRadius: 7, border: '1px solid #334155',
-              background: 'transparent', color: '#64748b', cursor: 'pointer', fontSize: 12,
+              padding: '6px 14px', borderRadius: 7, border: `1px solid ${C.border}`,
+              background: 'transparent', color: C.muted, cursor: 'pointer', fontSize: 12,
             }}>收起</button>
             <button onClick={onReject} style={{
-              padding: '6px 14px', borderRadius: 7, border: '1px solid #ef4444',
-              background: 'rgba(239,68,68,0.1)', color: '#f87171', cursor: 'pointer', fontSize: 12, fontWeight: 600,
+              padding: '6px 14px', borderRadius: 7, border: `1px solid ${C.red}`,
+              background: `${C.red}1a`, color: '#f87171', cursor: 'pointer', fontSize: 12, fontWeight: 600,
             }}>❌ 打回</button>
             <button onClick={onApprove} style={{
               padding: '6px 14px', borderRadius: 7, border: 'none',
-              background: '#10b981', color: '#fff', cursor: 'pointer', fontSize: 12, fontWeight: 600,
+              background: C.green, color: '#fff', cursor: 'pointer', fontSize: 12, fontWeight: 600,
             }}>✅ 审批通过</button>
           </div>
         </div>
@@ -626,6 +652,7 @@ const agentReplies: Record<string, string[]> = {
 }
 
 function AgentPanel({ node, onClose }: { node: FlowNode; onClose: () => void }) {
+  const C = useTheme()
   const [messages, setMessages] = useState<{ role: 'user' | 'agent'; text: string }[]>([
     { role: 'agent', text: `你好！我是 **${node.agentName}**，负责「${node.label}」阶段的自主交付。\n\n请告诉我具体需求，或点击下方快捷指令开始。` }
   ])
@@ -659,19 +686,19 @@ function AgentPanel({ node, onClose }: { node: FlowNode; onClose: () => void }) 
   return (
     <div style={{
       position: 'fixed', top: 0, right: 0, bottom: 0, width: 420,
-      background: '#0d1526', borderLeft: '1px solid #1e2d45',
+      background: C.sidebarBg, borderLeft: `1px solid ${C.border}`,
       display: 'flex', flexDirection: 'column', zIndex: 200,
       boxShadow: '-8px 0 32px rgba(0,0,0,0.5)'
     }}>
-      <div style={{ padding: '16px 20px', borderBottom: '1px solid #1e2d45', display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span style={{ fontSize: 20 }}>{node.icon}</span>
+      <div style={{ padding: '16px 20px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ display: 'flex', alignItems: 'center', color: C.muted }}>{node.icon}</span>
         <div style={{ flex: 1 }}>
-          <div style={{ color: '#f1f5f9', fontWeight: 600, fontSize: 14 }}>{node.agentName}</div>
+          <div style={{ color: C.text, fontWeight: 600, fontSize: 14 }}>{node.agentName}</div>
           <div style={{ color: '#64748b', fontSize: 11 }}>自主交付模式 · {node.label}</div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginRight: 8 }}>
-          <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#10b981' }} />
-          <span style={{ color: '#10b981', fontSize: 11 }}>在线</span>
+          <div style={{ width: 7, height: 7, borderRadius: '50%', background: C.green }} />
+          <span style={{ color: C.green, fontSize: 11 }}>在线</span>
         </div>
         <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: 18 }}>✕</button>
       </div>
@@ -681,8 +708,8 @@ function AgentPanel({ node, onClose }: { node: FlowNode; onClose: () => void }) 
             <div style={{
               maxWidth: '85%', padding: '10px 14px',
               borderRadius: m.role === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px',
-              background: m.role === 'user' ? '#3b82f6' : '#1a2235',
-              color: '#f1f5f9', fontSize: 13, lineHeight: 1.65, whiteSpace: 'pre-wrap', wordBreak: 'break-word'
+              background: m.role === 'user' ? C.blue : C.card,
+              color: C.text, fontSize: 13, lineHeight: 1.65, whiteSpace: 'pre-wrap', wordBreak: 'break-word'
             }}>
               {m.text || (typing && i === messages.length - 1 ? <span style={{ opacity: 0.4 }}>▋</span> : '')}
             </div>
@@ -692,18 +719,18 @@ function AgentPanel({ node, onClose }: { node: FlowNode; onClose: () => void }) 
       <div style={{ padding: '8px 20px', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
         {['开始自动交付', '查看当前进度', '生成交付报告'].map(cmd => (
           <button key={cmd} onClick={() => sendMessage(cmd)} style={{
-            padding: '4px 10px', borderRadius: 20, border: '1px solid #1e2d45',
-            background: 'transparent', color: '#94a3b8', fontSize: 11, cursor: 'pointer'
+            padding: '4px 10px', borderRadius: 20, border: `1px solid ${C.border}`,
+            background: 'transparent', color: C.muted, fontSize: 11, cursor: 'pointer'
           }}>{cmd}</button>
         ))}
       </div>
-      <div style={{ padding: '12px 20px', borderTop: '1px solid #1e2d45', display: 'flex', gap: 8 }}>
+      <div style={{ padding: '12px 20px', borderTop: `1px solid ${C.border}`, display: 'flex', gap: 8 }}>
         <input value={input} onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && sendMessage(input)}
           placeholder="输入指令..."
-          style={{ flex: 1, padding: '10px 14px', borderRadius: 8, background: '#1a2235', border: '1px solid #1e2d45', color: '#f1f5f9', fontSize: 13, outline: 'none' }}
+          style={{ flex: 1, padding: '10px 14px', borderRadius: 8, background: C.card, border: `1px solid ${C.border}`, color: C.text, fontSize: 13, outline: 'none' }}
         />
-        <button onClick={() => sendMessage(input)} style={{ padding: '10px 16px', borderRadius: 8, border: 'none', background: '#3b82f6', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>发送</button>
+        <button onClick={() => sendMessage(input)} style={{ padding: '10px 16px', borderRadius: 8, border: 'none', background: C.blue, color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>发送</button>
       </div>
     </div>
   )
@@ -716,33 +743,34 @@ function ModeModal({ node, onSelect, onClose }: {
   onSelect: (mode: 'human' | 'agent') => void
   onClose: () => void
 }) {
+  const C = useTheme()
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 300 }}
       onClick={onClose}>
-      <div style={{ background: '#1a2235', border: '1px solid #1e2d45', borderRadius: 16, padding: 32, width: 440, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}
+      <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: 32, width: 440, boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}
         onClick={e => e.stopPropagation()}>
-        <div style={{ fontSize: 22, marginBottom: 4 }}>{node.icon} {node.label}</div>
+        <div style={{ fontSize: 22, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ display: 'flex', alignItems: 'center', color: C.muted }}>{node.icon}</span>{node.label}</div>
         <div style={{ color: '#64748b', fontSize: 13, marginBottom: 24 }}>{node.desc}</div>
-        <div style={{ color: '#94a3b8', fontSize: 11, marginBottom: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>选择执行模式</div>
+        <div style={{ color: C.muted, fontSize: 11, marginBottom: 12, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>选择执行模式</div>
         <div style={{ display: 'flex', gap: 12 }}>
           <button onClick={() => onSelect('human')} style={{
-            flex: 1, padding: 18, borderRadius: 12, border: '1.5px solid #8b5cf6',
-            background: 'rgba(139,92,246,0.1)', color: '#f1f5f9', cursor: 'pointer', textAlign: 'left'
+            flex: 1, padding: 18, borderRadius: C.radius, border: `1.5px solid ${C.purple}`,
+            background: `${C.purple}1a`, color: C.text, cursor: 'pointer', textAlign: 'left'
           }}>
             <div style={{ fontSize: 22, marginBottom: 8 }}>🤝</div>
             <div style={{ fontWeight: 600, marginBottom: 6 }}>人工协同</div>
-            <div style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.5 }}>跳转到 <strong style={{ color: '#a78bfa' }}>{node.platform}</strong> 平台，由人工操作完成</div>
+            <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.5 }}>跳转到 <strong style={{ color: '#a78bfa' }}>{node.platform}</strong> 平台，由人工操作完成</div>
           </button>
           <button onClick={() => onSelect('agent')} style={{
-            flex: 1, padding: 18, borderRadius: 12, border: '1.5px solid #3b82f6',
-            background: 'rgba(59,130,246,0.1)', color: '#f1f5f9', cursor: 'pointer', textAlign: 'left'
+            flex: 1, padding: 18, borderRadius: C.radius, border: `1.5px solid ${C.blue}`,
+            background: `${C.blue}1a`, color: C.text, cursor: 'pointer', textAlign: 'left'
           }}>
             <div style={{ fontSize: 22, marginBottom: 8 }}>🤖</div>
             <div style={{ fontWeight: 600, marginBottom: 6 }}>自主交付</div>
-            <div style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.5 }}>由 <strong style={{ color: '#60a5fa' }}>{node.agentName}</strong> 自主完成，全程 AI 执行</div>
+            <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.5 }}>由 <strong style={{ color: '#60a5fa' }}>{node.agentName}</strong> 自主完成，全程 AI 执行</div>
           </button>
         </div>
-        <button onClick={onClose} style={{ marginTop: 16, width: '100%', padding: 8, borderRadius: 8, border: '1px solid #334155', background: 'transparent', color: '#64748b', cursor: 'pointer' }}>取消</button>
+        <button onClick={onClose} style={{ marginTop: 16, width: '100%', padding: 8, borderRadius: 8, border: `1px solid ${C.border}`, background: 'transparent', color: '#64748b', cursor: 'pointer' }}>取消</button>
       </div>
     </div>
   )
@@ -750,8 +778,12 @@ function ModeModal({ node, onSelect, onClose }: {
 
 // ─── Flow View ────────────────────────────────────────────────────────────────
 
-function FlowView({ req, dimaUrl, onReset }: { req: ParsedReq; dimaUrl: string; onReset: () => void }) {
-  const [nodes, setNodes] = useState<FlowNode[]>(buildNodes(req))
+function FlowView({ req, sourceLabel, onReset }: { req: ParsedReq; sourceLabel: string; onReset: () => void }) {
+  const C = useTheme()
+  const statusStyle = makeStatusStyle(C)
+  const statusColor = makeStatusColor(C)
+  const gateColor = makeGateColor(C)
+  const [nodes, setNodes] = useState<FlowNode[]>(() => buildNodes(req, C))
   const [gates, setGates] = useState<ReviewGate[]>(initialGates)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [modeModal, setModeModal] = useState<FlowNode | null>(null)
@@ -804,7 +836,7 @@ function FlowView({ req, dimaUrl, onReset }: { req: ParsedReq; dimaUrl: string; 
   const rows = [0,1,2,3,4].map(r => nodes.filter(n => n.row === r))
 
   return (
-    <div style={{ minHeight: '100vh', background: '#0a0f1e', padding: '28px 36px' }}>
+    <div style={{ minHeight: '100vh', background: C.bg, padding: '28px 36px' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
         <div>
@@ -812,29 +844,29 @@ function FlowView({ req, dimaUrl, onReset }: { req: ParsedReq; dimaUrl: string; 
             <button onClick={onReset} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: 13, padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
               ← 返回
             </button>
-            <span style={{ color: '#1e2d45' }}>|</span>
-            <span style={{ fontSize: 11, color: '#475569', fontFamily: 'monospace' }}>{dimaUrl}</span>
+            <span style={{ color: C.border }}>|</span>
+            <span style={{ fontSize: 11, color: '#475569', fontFamily: 'monospace' }}>{sourceLabel}</span>
           </div>
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: '#f1f5f9', margin: 0, marginBottom: 4 }}>
-            ⚡ {req.title}
+          <h2 style={{ fontSize: 22, fontWeight: 700, color: C.text, margin: 0, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Zap size={22} color={C.orange} /> {req.title}
           </h2>
           <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 12, color: '#64748b' }}>负责人：<span style={{ color: '#94a3b8' }}>{req.owner}</span></span>
-            <span style={{ fontSize: 12, color: '#64748b' }}>截止：<span style={{ color: '#94a3b8' }}>{req.deadline}</span></span>
-            <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, background: 'rgba(239,68,68,0.15)', color: '#f87171', border: '1px solid #ef444444' }}>{req.priority}</span>
+            <span style={{ fontSize: 12, color: '#64748b' }}>负责人：<span style={{ color: C.muted }}>{req.owner}</span></span>
+            <span style={{ fontSize: 12, color: '#64748b' }}>截止：<span style={{ color: C.muted }}>{req.deadline}</span></span>
+            <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, background: `${C.red}26`, color: '#f87171', border: `1px solid ${C.red}44` }}>{req.priority}</span>
             {req.tags.map(t => (
-              <span key={t} style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, background: 'rgba(59,130,246,0.1)', color: '#60a5fa', border: '1px solid #3b82f644' }}>{t}</span>
+              <span key={t} style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, background: `${C.blue}1a`, color: '#60a5fa', border: `1px solid ${C.blue}44` }}>{t}</span>
             ))}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={handleReqChange} style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid #f59e0b', background: 'rgba(245,158,11,0.1)', color: '#f59e0b', cursor: 'pointer', fontSize: 12 }}>🔄 需求变更</button>
-          <button onClick={handleBugFlow} style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid #ef4444', background: 'rgba(239,68,68,0.1)', color: '#ef4444', cursor: 'pointer', fontSize: 12 }}>🐛 Bug 回流</button>
+          <button onClick={handleReqChange} style={{ padding: '7px 14px', borderRadius: 8, border: `1px solid ${C.orange}`, background: `${C.orange}1a`, color: C.orange, cursor: 'pointer', fontSize: 12 }}>🔄 需求变更</button>
+          <button onClick={handleBugFlow} style={{ padding: '7px 14px', borderRadius: 8, border: `1px solid ${C.red}`, background: `${C.red}1a`, color: C.red, cursor: 'pointer', fontSize: 12 }}>🐛 Bug 回流</button>
         </div>
       </div>
 
       {/* 需求摘要 */}
-      <div style={{ background: '#0d1526', border: '1px solid #1e2d45', borderRadius: 10, padding: '12px 16px', marginBottom: 28, fontSize: 13, color: '#94a3b8', lineHeight: 1.6 }}>
+      <div style={{ background: C.sidebarBg, border: `1px solid ${C.border}`, borderRadius: 10, padding: '12px 16px', marginBottom: 28, fontSize: 13, color: C.muted, lineHeight: 1.6 }}>
         📝 {req.summary}
       </div>
 
@@ -848,7 +880,7 @@ function FlowView({ req, dimaUrl, onReset }: { req: ParsedReq; dimaUrl: string; 
           return (
             <React.Fragment key={rowIdx}>
               {/* 连接线 */}
-              {rowIdx > 0 && <div style={{ width: 1, height: 20, background: '#1e2d45' }} />}
+              {rowIdx > 0 && <div style={{ width: 1, height: 20, background: C.border }} />}
 
               {/* Row */}
               <div style={{ display: 'flex', gap: 20, justifyContent: 'center', alignItems: 'flex-start' }}>
@@ -875,22 +907,22 @@ function FlowView({ req, dimaUrl, onReset }: { req: ParsedReq; dimaUrl: string; 
                       >
                         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: node.color, borderRadius: '10px 10px 0 0' }} />
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5 }}>
-                          <span style={{ fontSize: 15 }}>{node.icon}</span>
-                          <span style={{ fontWeight: 600, fontSize: 13, color: '#f1f5f9' }}>{node.label}</span>
+                          <span style={{ display: 'flex', alignItems: 'center', color: C.muted }}>{node.icon}</span>
+                          <span style={{ fontWeight: 600, fontSize: 13, color: C.text }}>{node.label}</span>
                         </div>
                         <div style={{ fontSize: 11, color: '#64748b', lineHeight: 1.4, marginBottom: 8 }}>{node.desc}</div>
                         <div style={{ fontSize: 10, color: statusColor[node.status], fontWeight: 600 }}>{statusLabel[node.status]}</div>
                         {node.parallel && (
-                          <div style={{ position: 'absolute', top: 8, right: 8, fontSize: 9, color: '#475569', background: '#0d1526', padding: '1px 4px', borderRadius: 3 }}>并行</div>
+                          <div style={{ position: 'absolute', top: 8, right: 8, fontSize: 9, color: '#475569', background: C.sidebarBg, padding: '1px 4px', borderRadius: 3 }}>并行</div>
                         )}
                       </div>
                       {/* 执行模式标签 */}
                       {node.mode && (
                         <div style={{
                           marginTop: 6, fontSize: 10, padding: '2px 8px', borderRadius: 10,
-                          background: node.mode === 'agent' ? 'rgba(59,130,246,0.12)' : 'rgba(139,92,246,0.12)',
+                          background: node.mode === 'agent' ? `${C.blue}1f` : `${C.purple}1f`,
                           color: node.mode === 'agent' ? '#60a5fa' : '#a78bfa',
-                          border: `1px solid ${node.mode === 'agent' ? '#3b82f644' : '#8b5cf644'}`
+                          border: `1px solid ${node.mode === 'agent' ? `${C.blue}44` : `${C.purple}44`}`
                         }}>
                           {node.mode === 'agent' ? '🤖 自主交付' : `🤝 ${node.platform}`}
                         </div>
@@ -903,7 +935,7 @@ function FlowView({ req, dimaUrl, onReset }: { req: ParsedReq; dimaUrl: string; 
               {/* Gate + Inline Detail Panel */}
               {gate && (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', maxWidth: 680 }}>
-                  <div style={{ width: 1, height: 18, background: '#1e2d45' }} />
+                  <div style={{ width: 1, height: 18, background: C.border }} />
 
                   {/* Gate Button */}
                   <button
@@ -941,7 +973,7 @@ function FlowView({ req, dimaUrl, onReset }: { req: ParsedReq; dimaUrl: string; 
                     />
                   )}
 
-                  <div style={{ width: 1, height: 18, background: '#1e2d45' }} />
+                  <div style={{ width: 1, height: 18, background: C.border }} />
                 </div>
               )}
             </React.Fragment>
@@ -964,85 +996,172 @@ const RECENT_LINKS = [
   { url: 'https://req.internal.com/req/20260228/RISK-ENGINE-023', title: '风控引擎升级', priority: 'P0', owner: '王磊' },
 ]
 
+const RECENT_TEXTS = [
+  { text: '用户积分兑换功能，P1，支持积分抵扣、历史记录查询，需对接会员系统，预计 3 月底上线。', title: '积分兑换功能', priority: 'P1' },
+  { text: '消息推送中心改版，P0，统一管理站内信/短信/Push，支持模板配置和发送频控，避免骚扰用户。', title: '消息推送中心', priority: 'P0' },
+]
+
 export default function DeliveryFlowPage() {
+  const C = useTheme()
+  const [inputMode, setInputMode] = useState<'url' | 'text'>('url')
   const [dimaUrl, setDimaUrl] = useState('')
+  const [textDesc, setTextDesc] = useState('')
   const [req, setReq] = useState<ParsedReq | null>(null)
   const [loading, setLoading] = useState(false)
   const [inputFocused, setInputFocused] = useState(false)
+  const [sourceLabel, setSourceLabel] = useState('')
 
-  const handleSubmit = (url: string) => {
-    if (!url.trim()) return
-    setLoading(true)
-    setTimeout(() => {
-      setReq(parseDimaUrl(url))
-      setLoading(false)
-    }, 1200)
+  const handleSubmit = (overrideUrl?: string) => {
+    if (inputMode === 'url') {
+      const url = overrideUrl ?? dimaUrl
+      if (!url.trim()) return
+      if (overrideUrl) setDimaUrl(overrideUrl)
+      setLoading(true)
+      setSourceLabel(url)
+      setTimeout(() => { setReq(parseDimaUrl(url)); setLoading(false) }, 1200)
+    } else {
+      if (!textDesc.trim()) return
+      setLoading(true)
+      const label = textDesc.slice(0, 40) + (textDesc.length > 40 ? '…' : '')
+      setSourceLabel(label)
+      setTimeout(() => { setReq(parseTextDesc(textDesc)); setLoading(false) }, 1200)
+    }
   }
 
+  const canSubmit = inputMode === 'url' ? dimaUrl.trim().length > 0 : textDesc.trim().length > 0
+
   if (req) {
-    return <FlowView req={req} dimaUrl={dimaUrl} onReset={() => { setReq(null); setDimaUrl('') }} />
+    return <FlowView req={req} sourceLabel={sourceLabel} onReset={() => { setReq(null); setDimaUrl(''); setTextDesc('') }} />
   }
 
   return (
     <div style={{
-      minHeight: '100vh', background: '#0a0f1e',
+      minHeight: '100vh', background: C.bg,
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       padding: '40px 24px',
     }}>
       {/* 标题区 */}
-      <div style={{ textAlign: 'center', marginBottom: 48 }}>
-        <div style={{ fontSize: 40, marginBottom: 16 }}>⚡</div>
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: '#f1f5f9', margin: 0, marginBottom: 10 }}>
+      <div style={{ textAlign: 'center', marginBottom: 40 }}>
+        <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'center', color: C.orange }}><Zap size={40} /></div>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: C.text, margin: 0, marginBottom: 10 }}>
           AI 研发流程
         </h1>
         <p style={{ color: '#64748b', fontSize: 15, margin: 0, maxWidth: 420, lineHeight: 1.6 }}>
-          输入需求链接，自动解析需求并生成围绕该需求的 AI 交付任务流程
+          输入需求链接或文字描述，自动生成 AI 交付任务流程
         </p>
       </div>
 
       {/* 输入框 */}
       <div style={{ width: '100%', maxWidth: 560 }}>
-        <div style={{
-          display: 'flex', gap: 0,
-          border: `1.5px solid ${inputFocused ? '#3b82f6' : '#1e2d45'}`,
-          borderRadius: 12, overflow: 'hidden',
-          background: '#0d1526',
-          boxShadow: inputFocused ? '0 0 0 3px rgba(59,130,246,0.15)' : 'none',
-          transition: 'all 0.2s',
-        }}>
-          <div style={{ padding: '14px 16px', color: '#475569', fontSize: 15 }}>🔗</div>
-          <input
-            value={dimaUrl}
-            onChange={e => setDimaUrl(e.target.value)}
-            onFocus={() => setInputFocused(true)}
-            onBlur={() => setInputFocused(false)}
-            onKeyDown={e => e.key === 'Enter' && handleSubmit(dimaUrl)}
-            placeholder="粘贴需求链接，例如 https://req.internal.com/req/..."
-            style={{
-              flex: 1, padding: '14px 0', background: 'transparent',
-              border: 'none', outline: 'none', color: '#f1f5f9', fontSize: 14,
-            }}
-          />
-          <button
-            onClick={() => handleSubmit(dimaUrl)}
-            disabled={loading || !dimaUrl.trim()}
-            style={{
-              padding: '0 24px', background: dimaUrl.trim() ? '#3b82f6' : '#1e2d45',
-              border: 'none', color: dimaUrl.trim() ? '#fff' : '#475569',
-              cursor: dimaUrl.trim() ? 'pointer' : 'default',
-              fontSize: 14, fontWeight: 600, transition: 'all 0.2s',
-              minWidth: 80,
-            }}
-          >
-            {loading ? '解析中...' : '开始'}
-          </button>
+        {/* 模式切换 */}
+        <div style={{ display: 'flex', gap: 0, marginBottom: 12, background: C.sidebarBg, borderRadius: 8, padding: 4, border: `1px solid ${C.border}` }}>
+          {([
+            { key: 'url' as const, icon: <Link2 size={13} />, label: '链接', hint: 'Dima 需求链接' },
+            { key: 'text' as const, icon: <PencilLine size={13} />, label: '文字描述', hint: '自由输入需求描述' },
+          ] as const).map(({ key, icon, label }) => (
+            <button
+              key={key}
+              onClick={() => setInputMode(key)}
+              style={{
+                flex: 1, padding: '8px 0', borderRadius: 6, border: 'none', cursor: 'pointer',
+                fontSize: 13, fontWeight: inputMode === key ? 700 : 400,
+                background: inputMode === key ? C.border : 'transparent',
+                color: inputMode === key ? C.text : '#475569',
+                transition: 'all 0.15s',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+              }}
+            >
+              {icon}{label}
+            </button>
+          ))}
         </div>
+
+        {/* URL 模式 */}
+        {inputMode === 'url' && (
+          <div style={{
+            display: 'flex', gap: 0,
+            border: `1.5px solid ${inputFocused ? C.blue : C.border}`,
+            borderRadius: C.radius, overflow: 'hidden',
+            background: C.sidebarBg,
+            boxShadow: inputFocused ? `0 0 0 3px ${C.blue}26` : 'none',
+            transition: 'all 0.2s',
+          }}>
+            <div style={{ padding: '14px 16px', color: '#475569', display: 'flex', alignItems: 'center', flexShrink: 0 }}><Link2 size={15} /></div>
+            <input
+              value={dimaUrl}
+              onChange={e => setDimaUrl(e.target.value)}
+              onFocus={() => setInputFocused(true)}
+              onBlur={() => setInputFocused(false)}
+              onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+              placeholder="粘贴需求链接，例如 https://req.internal.com/req/..."
+              style={{
+                flex: 1, padding: '14px 0', background: 'transparent',
+                border: 'none', outline: 'none', color: C.text, fontSize: 14,
+              }}
+            />
+            <button
+              onClick={() => handleSubmit()}
+              disabled={loading || !canSubmit}
+              style={{
+                padding: '0 24px', background: canSubmit ? C.blue : C.border,
+                border: 'none', color: canSubmit ? '#fff' : '#475569',
+                cursor: canSubmit ? 'pointer' : 'default',
+                fontSize: 14, fontWeight: 600, transition: 'all 0.2s', minWidth: 80,
+              }}
+            >
+              {loading ? '解析中...' : '开始'}
+            </button>
+          </div>
+        )}
+
+        {/* 文字描述模式 */}
+        {inputMode === 'text' && (
+          <div style={{
+            border: `1.5px solid ${inputFocused ? C.blue : C.border}`,
+            borderRadius: C.radius, overflow: 'hidden', background: C.sidebarBg,
+            boxShadow: inputFocused ? `0 0 0 3px ${C.blue}26` : 'none',
+            transition: 'all 0.2s',
+          }}>
+            <textarea
+              value={textDesc}
+              onChange={e => setTextDesc(e.target.value)}
+              onFocus={() => setInputFocused(true)}
+              onBlur={() => setInputFocused(false)}
+              onKeyDown={e => e.key === 'Enter' && e.metaKey && handleSubmit()}
+              placeholder="用一段话描述你的需求，例如：&#10;活动发放系统，P0，支持定向发放、金额配置、领取记录查询，需接入风控系统，3 月 20 日上线。"
+              rows={4}
+              style={{
+                width: '100%', boxSizing: 'border-box',
+                padding: '14px 16px', background: 'transparent',
+                border: 'none', outline: 'none', color: C.text,
+                fontSize: 14, resize: 'none', lineHeight: 1.65,
+                fontFamily: 'inherit',
+              }}
+            />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px 10px', borderTop: `1px solid ${C.border}` }}>
+              <span style={{ fontSize: 11, color: '#334155' }}>⌘ + Enter 提交</span>
+              <button
+                onClick={() => handleSubmit()}
+                disabled={loading || !canSubmit}
+                style={{
+                  padding: '8px 20px', background: canSubmit ? C.blue : C.border,
+                  border: 'none', borderRadius: 8,
+                  color: canSubmit ? '#fff' : '#475569',
+                  cursor: canSubmit ? 'pointer' : 'default',
+                  fontSize: 13, fontWeight: 600, transition: 'all 0.2s',
+                }}
+              >
+                {loading ? '解析中...' : '开始'}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* 加载动画 */}
         {loading && (
           <div style={{ marginTop: 16, textAlign: 'center' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: '#64748b', fontSize: 13 }}>
-              <span style={{ display: 'inline-block', width: 14, height: 14, border: '2px solid #3b82f6', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+              <span style={{ display: 'inline-block', width: 14, height: 14, border: `2px solid ${C.blue}`, borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
               正在解析需求，生成交付流程...
             </div>
           </div>
@@ -1050,32 +1169,53 @@ export default function DeliveryFlowPage() {
       </div>
 
       {/* 最近使用 */}
-      <div style={{ width: '100%', maxWidth: 560, marginTop: 36 }}>
+      <div style={{ width: '100%', maxWidth: 560, marginTop: 32 }}>
         <div style={{ fontSize: 11, color: '#334155', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 12 }}>
-          最近使用
+          {inputMode === 'url' ? '最近使用' : '示例描述'}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {RECENT_LINKS.map(item => (
+          {inputMode === 'text' ? RECENT_TEXTS.map(item => (
             <button
-              key={item.url}
-              onClick={() => { setDimaUrl(item.url); handleSubmit(item.url) }}
+              key={item.text}
+              onClick={() => { setTextDesc(item.text); }}
               style={{
-                display: 'flex', alignItems: 'center', gap: 12,
+                display: 'flex', alignItems: 'flex-start', gap: 12,
                 padding: '12px 16px', borderRadius: 10,
-                background: '#0d1526', border: '1px solid #1e2d45',
-                color: '#f1f5f9', cursor: 'pointer', textAlign: 'left',
+                background: C.sidebarBg, border: `1px solid ${C.border}`,
+                color: C.text, cursor: 'pointer', textAlign: 'left',
                 transition: 'all 0.15s',
               }}
               onMouseEnter={e => (e.currentTarget.style.borderColor = '#334155')}
-              onMouseLeave={e => (e.currentTarget.style.borderColor = '#1e2d45')}
+              onMouseLeave={e => (e.currentTarget.style.borderColor = C.border)}
             >
-              <span style={{ fontSize: 18 }}>📋</span>
+              <span style={{ display: 'flex', alignItems: 'center', color: '#475569', flexShrink: 0 }}><PencilLine size={18} /></span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 4 }}>{item.title}</div>
+                <div style={{ fontSize: 11, color: '#475569', lineHeight: 1.6 }}>{item.text.slice(0, 80)}…</div>
+              </div>
+              <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 6, background: `${C.red}1f`, color: '#f87171', border: `1px solid ${C.red}33`, flexShrink: 0, alignSelf: 'flex-start' }}>{item.priority}</span>
+            </button>
+          )) : RECENT_LINKS.map(item => (
+            <button
+              key={item.url}
+              onClick={() => handleSubmit(item.url)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '12px 16px', borderRadius: 10,
+                background: C.sidebarBg, border: `1px solid ${C.border}`,
+                color: C.text, cursor: 'pointer', textAlign: 'left',
+                transition: 'all 0.15s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.borderColor = '#334155')}
+              onMouseLeave={e => (e.currentTarget.style.borderColor = C.border)}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', color: '#475569' }}><ClipboardList size={18} /></span>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 2 }}>{item.title}</div>
                 <div style={{ fontSize: 11, color: '#475569', fontFamily: 'monospace' }}>{item.url}</div>
               </div>
               <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 6, background: 'rgba(239,68,68,0.12)', color: '#f87171', border: '1px solid #ef444433' }}>{item.priority}</span>
+                <span style={{ fontSize: 10, padding: '2px 6px', borderRadius: 6, background: `${C.red}1f`, color: '#f87171', border: `1px solid ${C.red}33` }}>{item.priority}</span>
                 <span style={{ fontSize: 11, color: '#475569' }}>{item.owner}</span>
               </div>
             </button>
@@ -1085,15 +1225,15 @@ export default function DeliveryFlowPage() {
 
       {/* 功能说明 */}
       <div style={{ display: 'flex', gap: 20, marginTop: 48, flexWrap: 'wrap', justifyContent: 'center' }}>
-        {[
-          ['🔀', 'DAG 并行编排', '多节点并行，自动识别依赖关系'],
-          ['🔒', '准入准出卡点', '需求/方案/代码/上线四道评审门'],
-          ['🤝', '人工协同', '跳转 Muse / Maco / Neo 等平台'],
-          ['🤖', '自主交付', 'Agent 全程接管，对话式完成'],
-        ].map(([icon, title, desc]) => (
+        {([
+          { icon: <GitMerge size={22} />, title: 'DAG 并行编排', desc: '多节点并行，自动识别依赖关系' },
+          { icon: <Lock size={22} />, title: '准入准出卡点', desc: '需求/方案/代码/上线四道评审门' },
+          { icon: <Handshake size={22} />, title: '人工协同', desc: '跳转 Muse / Maco / Neo 等平台' },
+          { icon: <span>🤖</span>, title: '自主交付', desc: 'Agent 全程接管，对话式完成' },
+        ] as const).map(({ icon, title, desc }) => (
           <div key={title} style={{ textAlign: 'center', maxWidth: 130 }}>
-            <div style={{ fontSize: 22, marginBottom: 6 }}>{icon}</div>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#94a3b8', marginBottom: 4 }}>{title}</div>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6, color: C.muted }}>{icon}</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: C.muted, marginBottom: 4 }}>{title}</div>
             <div style={{ fontSize: 11, color: '#475569', lineHeight: 1.5 }}>{desc}</div>
           </div>
         ))}

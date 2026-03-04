@@ -1,19 +1,6 @@
 import React, { useState } from 'react';
-
-// ─── Design Tokens ────────────────────────────────────────────────────────────
-const C = {
-  bg: '#0a0f1e',
-  card: '#1a2235',
-  border: '#1e2d45',
-  text: '#f1f5f9',
-  muted: '#94a3b8',
-  blue: '#3b82f6',
-  green: '#10b981',
-  purple: '#8b5cf6',
-  orange: '#f59e0b',
-  red: '#ef4444',
-  pink: '#ec4899',
-};
+import { Bot, Zap, Package, GitMerge, Clock, UserCheck, BarChart2, Users, Trophy, Code2, FileText, GitPullRequest, TestTube2 } from 'lucide-react';
+import { useTheme } from '../ThemeContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Period = '本周' | '本月' | '本季度';
@@ -26,7 +13,7 @@ interface MetricCard {
   progress?: { current: number; total: number; label: string };
   target: string;
   color: string;
-  icon: string;
+  icon: React.ReactElement;
 }
 
 interface TeamMember {
@@ -53,16 +40,7 @@ interface TeamData {
   trendData: number[];
 }
 
-// ─── Personal Data ─────────────────────────────────────────────────────────────
-const PERSONAL_METRICS: MetricCard[] = [
-  { label: 'AI 代码占比', value: '61%', trend: { text: '↑19%', positive: true }, target: '目标 60% ✅', color: C.green, icon: '🤖' },
-  { label: '需求交付周期', value: '5.8天', trend: { text: '↓28%', positive: true }, target: '目标 ↓25% ✅', color: C.blue, icon: '⚡' },
-  { label: '本月交付需求', value: '7个', trend: { text: '↑40%', positive: true }, target: '目标 6个 ✅', color: C.purple, icon: '📦' },
-  { label: 'PR 合并数', value: '34次', trend: { text: '↑22%', positive: true }, target: '团队均值 21次', color: C.orange, icon: '🔀' },
-  { label: 'AI 工具使用时长', value: '38h', trend: { text: '↑15%', positive: true }, target: '团队均值 24h', color: C.pink, icon: '⏱️' },
-  { label: '超级个体评级', value: 'L2', progress: { current: 2, total: 3, label: 'L2 / L3' }, target: '下一级：L3', color: C.purple, icon: '🦸' },
-];
-
+// ─── Static data (no color references) ────────────────────────────────────────
 const PERSONAL_TREND_DATA = [38, 43, 47, 52, 55, 57, 59, 61];
 const PERSONAL_ACTIVITY = [
   { date: '03-04', event: '完成需求「红包活动」AI 辅助编码', type: 'code', ai: true },
@@ -73,35 +51,20 @@ const PERSONAL_ACTIVITY = [
   { date: '02-27', event: '参与方案评审，AI 生成架构图', type: 'doc', ai: true },
 ];
 
-const SKILL_RADAR = [
-  { label: 'AI Coding', value: 85, color: C.blue },
-  { label: '需求分析', value: 72, color: C.purple },
-  { label: '架构设计', value: 68, color: C.green },
-  { label: '测试覆盖', value: 91, color: C.orange },
-  { label: '交付效率', value: 78, color: C.pink },
-];
-
-// ─── Team Data ─────────────────────────────────────────────────────────────────
-const ALL_TEAMS: TeamData[] = [
+const ALL_TEAMS_STATIC = [
   {
     id: 'logistics',
     name: '物流团队',
     aiRatio: '58%',
     cycle: '6.2天',
     superIndividuals: '5人',
-    level: 'L2',
+    level: 'L2' as const,
     trendData: [40, 44, 47, 50, 53, 55, 57, 58],
-    metrics: [
-      { label: 'AI 代码占比', value: '58%', trend: { text: '↑16%', positive: true }, target: '目标 60%', color: C.blue, icon: '🤖' },
-      { label: '需求交付周期', value: '6.2天', trend: { text: '↓22%', positive: true }, target: '目标 ↓25%', color: C.green, icon: '⚡' },
-      { label: '月交付需求', value: '68个', trend: { text: '↑31%', positive: true }, target: '目标 ↑30% ✅', color: C.purple, icon: '📦' },
-      { label: '超级个体数', value: '5人', progress: { current: 5, total: 20, label: '5 / 20' }, target: '目标 20人', color: C.orange, icon: '🦸' },
-    ],
     members: [
-      { name: '张明', avatar: '👨‍💻', role: '高级工程师', aiRatio: '71%', cycle: '4.8天', prs: '12', level: 'L3', trend: '↑8%', trendUp: true },
-      { name: '李雯', avatar: '👩‍💻', role: '工程师', aiRatio: '64%', cycle: '5.5天', prs: '9', level: 'L2', trend: '↑12%', trendUp: true },
-      { name: '王磊', avatar: '👨‍💻', role: '工程师', aiRatio: '58%', cycle: '6.1天', prs: '8', level: 'L2', trend: '↑5%', trendUp: true },
-      { name: '赵芳', avatar: '👩‍💻', role: '初级工程师', aiRatio: '41%', cycle: '8.2天', prs: '5', level: 'L1', trend: '↑18%', trendUp: true },
+      { name: '张明', avatar: '👨‍💻', role: '高级工程师', aiRatio: '71%', cycle: '4.8天', prs: '12', level: 'L3' as const, trend: '↑8%', trendUp: true },
+      { name: '李雯', avatar: '👩‍💻', role: '工程师', aiRatio: '64%', cycle: '5.5天', prs: '9', level: 'L2' as const, trend: '↑12%', trendUp: true },
+      { name: '王磊', avatar: '👨‍💻', role: '工程师', aiRatio: '58%', cycle: '6.1天', prs: '8', level: 'L2' as const, trend: '↑5%', trendUp: true },
+      { name: '赵芳', avatar: '👩‍💻', role: '初级工程师', aiRatio: '41%', cycle: '8.2天', prs: '5', level: 'L1' as const, trend: '↑18%', trendUp: true },
     ],
   },
   {
@@ -110,19 +73,13 @@ const ALL_TEAMS: TeamData[] = [
     aiRatio: '51%',
     cycle: '7.1天',
     superIndividuals: '4人',
-    level: 'L2',
+    level: 'L2' as const,
     trendData: [32, 36, 39, 42, 45, 47, 49, 51],
-    metrics: [
-      { label: 'AI 代码占比', value: '51%', trend: { text: '↑19%', positive: true }, target: '目标 60%', color: C.blue, icon: '🤖' },
-      { label: '需求交付周期', value: '7.1天', trend: { text: '↓15%', positive: true }, target: '目标 ↓25%', color: C.green, icon: '⚡' },
-      { label: '月交付需求', value: '54个', trend: { text: '↑22%', positive: true }, target: '目标 ↑30%', color: C.purple, icon: '📦' },
-      { label: '超级个体数', value: '4人', progress: { current: 4, total: 18, label: '4 / 18' }, target: '目标 18人', color: C.orange, icon: '🦸' },
-    ],
     members: [
-      { name: '陈浩', avatar: '👨‍💻', role: '高级工程师', aiRatio: '68%', cycle: '5.2天', prs: '11', level: 'L2', trend: '↑14%', trendUp: true },
-      { name: '刘静', avatar: '👩‍💻', role: '工程师', aiRatio: '55%', cycle: '6.8天', prs: '8', level: 'L2', trend: '↑9%', trendUp: true },
-      { name: '孙伟', avatar: '👨‍💻', role: '工程师', aiRatio: '48%', cycle: '7.5天', prs: '7', level: 'L1', trend: '↑7%', trendUp: true },
-      { name: '周丽', avatar: '👩‍💻', role: '初级工程师', aiRatio: '33%', cycle: '9.8天', prs: '4', level: 'L1', trend: '↑21%', trendUp: true },
+      { name: '陈浩', avatar: '👨‍💻', role: '高级工程师', aiRatio: '68%', cycle: '5.2天', prs: '11', level: 'L2' as const, trend: '↑14%', trendUp: true },
+      { name: '刘静', avatar: '👩‍💻', role: '工程师', aiRatio: '55%', cycle: '6.8天', prs: '8', level: 'L2' as const, trend: '↑9%', trendUp: true },
+      { name: '孙伟', avatar: '👨‍💻', role: '工程师', aiRatio: '48%', cycle: '7.5天', prs: '7', level: 'L1' as const, trend: '↑7%', trendUp: true },
+      { name: '周丽', avatar: '👩‍💻', role: '初级工程师', aiRatio: '33%', cycle: '9.8天', prs: '4', level: 'L1' as const, trend: '↑21%', trendUp: true },
     ],
   },
   {
@@ -131,18 +88,12 @@ const ALL_TEAMS: TeamData[] = [
     aiRatio: '47%',
     cycle: '8.5天',
     superIndividuals: '3人',
-    level: 'L1',
+    level: 'L1' as const,
     trendData: [28, 31, 34, 37, 39, 42, 45, 47],
-    metrics: [
-      { label: 'AI 代码占比', value: '47%', trend: { text: '↑19%', positive: true }, target: '目标 60%', color: C.blue, icon: '🤖' },
-      { label: '需求交付周期', value: '8.5天', trend: { text: '↓12%', positive: true }, target: '目标 ↓25%', color: C.green, icon: '⚡' },
-      { label: '月交付需求', value: '41个', trend: { text: '↑17%', positive: true }, target: '目标 ↑30%', color: C.purple, icon: '📦' },
-      { label: '超级个体数', value: '3人', progress: { current: 3, total: 15, label: '3 / 15' }, target: '目标 15人', color: C.orange, icon: '🦸' },
-    ],
     members: [
-      { name: '吴鹏', avatar: '👨‍💻', role: '高级工程师', aiRatio: '62%', cycle: '6.1天', prs: '10', level: 'L2', trend: '↑11%', trendUp: true },
-      { name: '郑婷', avatar: '👩‍💻', role: '工程师', aiRatio: '49%', cycle: '8.0天', prs: '7', level: 'L1', trend: '↑8%', trendUp: true },
-      { name: '冯强', avatar: '👨‍💻', role: '工程师', aiRatio: '38%', cycle: '10.2天', prs: '5', level: 'L1', trend: '↑15%', trendUp: true },
+      { name: '吴鹏', avatar: '👨‍💻', role: '高级工程师', aiRatio: '62%', cycle: '6.1天', prs: '10', level: 'L2' as const, trend: '↑11%', trendUp: true },
+      { name: '郑婷', avatar: '👩‍💻', role: '工程师', aiRatio: '49%', cycle: '8.0天', prs: '7', level: 'L1' as const, trend: '↑8%', trendUp: true },
+      { name: '冯强', avatar: '👨‍💻', role: '工程师', aiRatio: '38%', cycle: '10.2天', prs: '5', level: 'L1' as const, trend: '↑15%', trendUp: true },
     ],
   },
   {
@@ -151,18 +102,12 @@ const ALL_TEAMS: TeamData[] = [
     aiRatio: '43%',
     cycle: '9.2天',
     superIndividuals: '2人',
-    level: 'L1',
+    level: 'L1' as const,
     trendData: [25, 28, 31, 34, 37, 39, 41, 43],
-    metrics: [
-      { label: 'AI 代码占比', value: '43%', trend: { text: '↑18%', positive: true }, target: '目标 60%', color: C.blue, icon: '🤖' },
-      { label: '需求交付周期', value: '9.2天', trend: { text: '↓9%', positive: true }, target: '目标 ↓25%', color: C.green, icon: '⚡' },
-      { label: '月交付需求', value: '36个', trend: { text: '↑14%', positive: true }, target: '目标 ↑30%', color: C.purple, icon: '📦' },
-      { label: '超级个体数', value: '2人', progress: { current: 2, total: 12, label: '2 / 12' }, target: '目标 12人', color: C.orange, icon: '🦸' },
-    ],
     members: [
-      { name: '蒋华', avatar: '👨‍💻', role: '高级工程师', aiRatio: '59%', cycle: '6.8天', prs: '9', level: 'L2', trend: '↑13%', trendUp: true },
-      { name: '韩梅', avatar: '👩‍💻', role: '工程师', aiRatio: '44%', cycle: '9.1天', prs: '6', level: 'L1', trend: '↑6%', trendUp: true },
-      { name: '杨军', avatar: '👨‍💻', role: '工程师', aiRatio: '31%', cycle: '11.5天', prs: '4', level: 'L1', trend: '↑19%', trendUp: true },
+      { name: '蒋华', avatar: '👨‍💻', role: '高级工程师', aiRatio: '59%', cycle: '6.8天', prs: '9', level: 'L2' as const, trend: '↑13%', trendUp: true },
+      { name: '韩梅', avatar: '👩‍💻', role: '工程师', aiRatio: '44%', cycle: '9.1天', prs: '6', level: 'L1' as const, trend: '↑6%', trendUp: true },
+      { name: '杨军', avatar: '👨‍💻', role: '工程师', aiRatio: '31%', cycle: '11.5天', prs: '4', level: 'L1' as const, trend: '↑19%', trendUp: true },
     ],
   },
   {
@@ -171,59 +116,51 @@ const ALL_TEAMS: TeamData[] = [
     aiRatio: '38%',
     cycle: '10.1天',
     superIndividuals: '1人',
-    level: 'L1',
+    level: 'L1' as const,
     trendData: [20, 23, 26, 29, 32, 34, 36, 38],
-    metrics: [
-      { label: 'AI 代码占比', value: '38%', trend: { text: '↑18%', positive: true }, target: '目标 60%', color: C.blue, icon: '🤖' },
-      { label: '需求交付周期', value: '10.1天', trend: { text: '↓7%', positive: true }, target: '目标 ↓25%', color: C.green, icon: '⚡' },
-      { label: '月交付需求', value: '28个', trend: { text: '↑11%', positive: true }, target: '目标 ↑30%', color: C.purple, icon: '📦' },
-      { label: '超级个体数', value: '1人', progress: { current: 1, total: 10, label: '1 / 10' }, target: '目标 10人', color: C.orange, icon: '🦸' },
-    ],
     members: [
-      { name: '林杰', avatar: '👨‍💻', role: '高级工程师', aiRatio: '52%', cycle: '7.5天', prs: '8', level: 'L2', trend: '↑16%', trendUp: true },
-      { name: '许燕', avatar: '👩‍💻', role: '工程师', aiRatio: '38%', cycle: '10.0天', prs: '5', level: 'L1', trend: '↑10%', trendUp: true },
-      { name: '曹磊', avatar: '👨‍💻', role: '初级工程师', aiRatio: '24%', cycle: '13.2天', prs: '3', level: 'L1', trend: '↑22%', trendUp: true },
+      { name: '林杰', avatar: '👨‍💻', role: '高级工程师', aiRatio: '52%', cycle: '7.5天', prs: '8', level: 'L2' as const, trend: '↑16%', trendUp: true },
+      { name: '许燕', avatar: '👩‍💻', role: '工程师', aiRatio: '38%', cycle: '10.0天', prs: '5', level: 'L1' as const, trend: '↑10%', trendUp: true },
+      { name: '曹磊', avatar: '👨‍💻', role: '初级工程师', aiRatio: '24%', cycle: '13.2天', prs: '3', level: 'L1' as const, trend: '↑22%', trendUp: true },
     ],
   },
 ];
 
-const MATURITY_DATA = [
-  { level: 'L1 AI Coding', pct: 78, color: C.blue },
-  { level: 'L2 AI Developing', pct: 18, color: C.purple },
-  { level: 'L3 AI Engineering', pct: 4, color: C.green },
-];
-
 // ─── Shared Sub-components ────────────────────────────────────────────────────
 
-const MetricCardItem: React.FC<{ card: MetricCard }> = ({ card }) => (
-  <div style={{ padding: '20px 22px', borderRadius: 12, background: C.card, border: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column', gap: 10 }}>
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-      <span style={{ fontSize: 13, color: C.muted, fontWeight: 500 }}>{card.label}</span>
-      <span style={{ fontSize: 20 }}>{card.icon}</span>
+const MetricCardItem: React.FC<{ card: MetricCard }> = ({ card }) => {
+  const C = useTheme();
+  return (
+    <div style={{ padding: '20px 22px', borderRadius: 12, background: C.card, border: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: 13, color: C.muted, fontWeight: 500 }}>{card.label}</span>
+        <span style={{ color: C.muted, display: 'flex', alignItems: 'center' }}>{card.icon}</span>
+      </div>
+      <div style={{ fontSize: 32, fontWeight: 800, color: card.color, lineHeight: 1 }}>{card.value}</div>
+      {card.trend && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: card.trend.positive ? C.green : C.red, background: card.trend.positive ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)', padding: '2px 8px', borderRadius: 6 }}>{card.trend.text}</span>
+          <span style={{ fontSize: 12, color: C.muted }}>较上期</span>
+        </div>
+      )}
+      {card.progress && (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+            <span style={{ fontSize: 12, color: C.muted }}>完成进度</span>
+            <span style={{ fontSize: 12, color: card.color, fontWeight: 600 }}>{card.progress.label}</span>
+          </div>
+          <div style={{ height: 6, borderRadius: 3, background: C.border, overflow: 'hidden' }}>
+            <div style={{ height: '100%', borderRadius: 3, background: card.color, width: `${(card.progress.current / card.progress.total) * 100}%`, transition: 'width 0.6s ease' }} />
+          </div>
+        </div>
+      )}
+      <div style={{ fontSize: 12, color: C.muted }}>{card.target}</div>
     </div>
-    <div style={{ fontSize: 32, fontWeight: 800, color: card.color, lineHeight: 1 }}>{card.value}</div>
-    {card.trend && (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 13, fontWeight: 700, color: card.trend.positive ? C.green : C.red, background: card.trend.positive ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)', padding: '2px 8px', borderRadius: 6 }}>{card.trend.text}</span>
-        <span style={{ fontSize: 12, color: C.muted }}>较上期</span>
-      </div>
-    )}
-    {card.progress && (
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-          <span style={{ fontSize: 12, color: C.muted }}>完成进度</span>
-          <span style={{ fontSize: 12, color: card.color, fontWeight: 600 }}>{card.progress.label}</span>
-        </div>
-        <div style={{ height: 6, borderRadius: 3, background: 'rgba(255,255,255,0.06)', overflow: 'hidden' }}>
-          <div style={{ height: '100%', borderRadius: 3, background: card.color, width: `${(card.progress.current / card.progress.total) * 100}%`, transition: 'width 0.6s ease' }} />
-        </div>
-      </div>
-    )}
-    <div style={{ fontSize: 12, color: C.muted }}>{card.target}</div>
-  </div>
-);
+  );
+};
 
 const LevelBadge: React.FC<{ level: 'L1' | 'L2' | 'L3' }> = ({ level }) => {
+  const C = useTheme();
   const colorMap = { L1: C.blue, L2: C.purple, L3: C.green };
   return (
     <span style={{ padding: '3px 10px', borderRadius: 6, background: `${colorMap[level]}20`, color: colorMap[level], fontSize: 12, fontWeight: 700, border: `1px solid ${colorMap[level]}40` }}>
@@ -233,6 +170,7 @@ const LevelBadge: React.FC<{ level: 'L1' | 'L2' | 'L3' }> = ({ level }) => {
 };
 
 const MiniLineChart: React.FC<{ data: number[]; color: string }> = ({ data, color }) => {
+  const C = useTheme();
   const W = 200; const H = 60; const padL = 8; const padR = 8; const padT = 8; const padB = 8;
   const chartW = W - padL - padR; const chartH = H - padT - padB;
   const minVal = Math.min(...data) - 2; const maxVal = Math.max(...data) + 2;
@@ -256,31 +194,59 @@ const MiniLineChart: React.FC<{ data: number[]; color: string }> = ({ data, colo
   );
 };
 
-const SectionTitle: React.FC<{ text: string; sub?: string }> = ({ text, sub }) => (
-  <div style={{ marginBottom: 20 }}>
-    <h2 style={{ fontSize: 17, fontWeight: 700, color: C.text, margin: '0 0 4px' }}>{text}</h2>
-    {sub && <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>{sub}</p>}
-  </div>
-);
+const SectionTitle: React.FC<{ text: string; sub?: string }> = ({ text, sub }) => {
+  const C = useTheme();
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <h2 style={{ fontSize: 17, fontWeight: 700, color: C.text, margin: '0 0 4px' }}>{text}</h2>
+      {sub && <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>{sub}</p>}
+    </div>
+  );
+};
 
 // ─── Personal View ─────────────────────────────────────────────────────────────
 
 const PersonalView: React.FC<{ period: Period }> = ({ period }) => {
+  const C = useTheme();
+
+  const PERSONAL_METRICS: MetricCard[] = [
+    { label: 'AI 代码占比', value: '61%', trend: { text: '↑19%', positive: true }, target: '目标 60% ✅', color: C.green, icon: <Bot size={20} /> },
+    { label: '需求交付周期', value: '5.8天', trend: { text: '↓28%', positive: true }, target: '目标 ↓25% ✅', color: C.blue, icon: <Zap size={20} /> },
+    { label: '本月交付需求', value: '7个', trend: { text: '↑40%', positive: true }, target: '目标 6个 ✅', color: C.purple, icon: <Package size={20} /> },
+    { label: 'PR 合并数', value: '34次', trend: { text: '↑22%', positive: true }, target: '团队均值 21次', color: C.orange, icon: <GitMerge size={20} /> },
+    { label: 'AI 工具使用时长', value: '38h', trend: { text: '↑15%', positive: true }, target: '团队均值 24h', color: '#ec4899', icon: <Clock size={20} /> },
+    { label: '超级个体评级', value: 'L2', progress: { current: 2, total: 3, label: 'L2 / L3' }, target: '下一级：L3', color: C.purple, icon: <UserCheck size={20} /> },
+  ];
+
+  const SKILL_RADAR = [
+    { label: 'AI Coding', value: 85, color: C.blue },
+    { label: '需求分析', value: 72, color: C.purple },
+    { label: '架构设计', value: 68, color: C.green },
+    { label: '测试覆盖', value: 91, color: C.orange },
+    { label: '交付效率', value: 78, color: '#ec4899' },
+  ];
+
   const actTypeColor: Record<string, string> = { code: C.blue, doc: C.purple, pr: C.green, test: C.orange };
   const actTypeLabel: Record<string, string> = { code: 'Coding', doc: '文档', pr: 'PR', test: '测试' };
+  const actTypeIcon: Record<string, React.ReactElement> = {
+    code: <Code2 size={14} />,
+    doc: <FileText size={14} />,
+    pr: <GitPullRequest size={14} />,
+    test: <TestTube2 size={14} />,
+  };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
       {/* Identity card */}
-      <div style={{ padding: '24px', borderRadius: 14, background: `linear-gradient(135deg, #1a2235 0%, #1a1a3a 100%)`, border: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 20 }}>
+      <div style={{ padding: '24px', borderRadius: 14, background: C.card, border: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', gap: 20 }}>
         <div style={{ width: 64, height: 64, borderRadius: '50%', background: `linear-gradient(135deg, ${C.blue}, ${C.purple})`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28, flexShrink: 0 }}>👨‍💻</div>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 18, fontWeight: 800, color: C.text, marginBottom: 4 }}>张三 · 高级工程师</div>
           <div style={{ fontSize: 13, color: C.muted, marginBottom: 10 }}>物流团队 · 加入 847 天</div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <LevelBadge level="L2" />
-            <span style={{ padding: '3px 10px', borderRadius: 6, background: 'rgba(16,185,129,0.15)', color: C.green, fontSize: 12, fontWeight: 700, border: '1px solid rgba(16,185,129,0.3)' }}>🦸 超级个体</span>
-            <span style={{ padding: '3px 10px', borderRadius: 6, background: 'rgba(245,158,11,0.15)', color: C.orange, fontSize: 12, fontWeight: 700, border: '1px solid rgba(245,158,11,0.3)' }}>🏆 本月 Top 3</span>
+            <span style={{ padding: '3px 10px', borderRadius: 6, background: 'rgba(16,185,129,0.15)', color: C.green, fontSize: 12, fontWeight: 700, border: '1px solid rgba(16,185,129,0.3)', display: 'inline-flex', alignItems: 'center', gap: 4 }}><UserCheck size={12} /> 超级个体</span>
+            <span style={{ padding: '3px 10px', borderRadius: 6, background: 'rgba(245,158,11,0.15)', color: C.orange, fontSize: 12, fontWeight: 700, border: '1px solid rgba(245,158,11,0.3)', display: 'inline-flex', alignItems: 'center', gap: 4 }}><Trophy size={12} /> 本月 Top 3</span>
           </div>
         </div>
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
@@ -316,7 +282,7 @@ const PersonalView: React.FC<{ period: Period }> = ({ period }) => {
                   <span style={{ fontSize: 13, color: C.text }}>{s.label}</span>
                   <span style={{ fontSize: 13, color: s.color, fontWeight: 700 }}>{s.value}</span>
                 </div>
-                <div style={{ height: 8, borderRadius: 4, background: 'rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+                <div style={{ height: 8, borderRadius: 4, background: C.border, overflow: 'hidden' }}>
                   <div style={{ height: '100%', borderRadius: 4, background: `linear-gradient(90deg, ${s.color}99, ${s.color})`, width: `${s.value}%`, transition: 'width 0.8s ease' }} />
                 </div>
               </div>
@@ -340,8 +306,8 @@ const PersonalView: React.FC<{ period: Period }> = ({ period }) => {
                   <div style={{ fontSize: 13, color: C.text, lineHeight: 1.5 }}>{act.event}</div>
                   <div style={{ display: 'flex', gap: 8, marginTop: 5 }}>
                     <span style={{ fontSize: 11, color: C.muted }}>{act.date}</span>
-                    <span style={{ fontSize: 11, padding: '1px 7px', borderRadius: 4, background: `${actTypeColor[act.type]}18`, color: actTypeColor[act.type], border: `1px solid ${actTypeColor[act.type]}30` }}>{actTypeLabel[act.type]}</span>
-                    {act.ai && <span style={{ fontSize: 11, padding: '1px 7px', borderRadius: 4, background: 'rgba(139,92,246,0.15)', color: C.purple, border: '1px solid rgba(139,92,246,0.3)' }}>🤖 AI 参与</span>}
+                    <span style={{ fontSize: 11, padding: '1px 7px', borderRadius: 4, background: `${actTypeColor[act.type]}18`, color: actTypeColor[act.type], border: `1px solid ${actTypeColor[act.type]}30`, display: 'inline-flex', alignItems: 'center', gap: 3 }}>{actTypeIcon[act.type]}{actTypeLabel[act.type]}</span>
+                    {act.ai && <span style={{ fontSize: 11, padding: '1px 7px', borderRadius: 4, background: 'rgba(139,92,246,0.15)', color: C.purple, border: '1px solid rgba(139,92,246,0.3)', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Bot size={11} /> AI 参与</span>}
                   </div>
                 </div>
               </div>
@@ -354,6 +320,7 @@ const PersonalView: React.FC<{ period: Period }> = ({ period }) => {
 };
 
 const PersonalLineChart: React.FC = () => {
+  const C = useTheme();
   const W = 560; const H = 180; const padL = 48; const padR = 20; const padT = 20; const padB = 36;
   const chartW = W - padL - padR; const chartH = H - padT - padB;
   const minVal = 30; const maxVal = 70;
@@ -394,7 +361,63 @@ const PersonalLineChart: React.FC = () => {
 // ─── Team View ─────────────────────────────────────────────────────────────────
 
 const TeamView: React.FC<{ period: Period }> = ({ period }) => {
+  const C = useTheme();
   const [selectedTeam, setSelectedTeam] = useState<string>('all');
+
+  const ALL_TEAMS: TeamData[] = [
+    {
+      ...ALL_TEAMS_STATIC[0],
+      metrics: [
+        { label: 'AI 代码占比', value: '58%', trend: { text: '↑16%', positive: true }, target: '目标 60%', color: C.blue, icon: <Bot size={20} /> },
+        { label: '需求交付周期', value: '6.2天', trend: { text: '↓22%', positive: true }, target: '目标 ↓25%', color: C.green, icon: <Zap size={20} /> },
+        { label: '月交付需求', value: '68个', trend: { text: '↑31%', positive: true }, target: '目标 ↑30% ✅', color: C.purple, icon: <Package size={20} /> },
+        { label: '超级个体数', value: '5人', progress: { current: 5, total: 20, label: '5 / 20' }, target: '目标 20人', color: C.orange, icon: <UserCheck size={20} /> },
+      ],
+    },
+    {
+      ...ALL_TEAMS_STATIC[1],
+      metrics: [
+        { label: 'AI 代码占比', value: '51%', trend: { text: '↑19%', positive: true }, target: '目标 60%', color: C.blue, icon: <Bot size={20} /> },
+        { label: '需求交付周期', value: '7.1天', trend: { text: '↓15%', positive: true }, target: '目标 ↓25%', color: C.green, icon: <Zap size={20} /> },
+        { label: '月交付需求', value: '54个', trend: { text: '↑22%', positive: true }, target: '目标 ↑30%', color: C.purple, icon: <Package size={20} /> },
+        { label: '超级个体数', value: '4人', progress: { current: 4, total: 18, label: '4 / 18' }, target: '目标 18人', color: C.orange, icon: <UserCheck size={20} /> },
+      ],
+    },
+    {
+      ...ALL_TEAMS_STATIC[2],
+      metrics: [
+        { label: 'AI 代码占比', value: '47%', trend: { text: '↑19%', positive: true }, target: '目标 60%', color: C.blue, icon: <Bot size={20} /> },
+        { label: '需求交付周期', value: '8.5天', trend: { text: '↓12%', positive: true }, target: '目标 ↓25%', color: C.green, icon: <Zap size={20} /> },
+        { label: '月交付需求', value: '41个', trend: { text: '↑17%', positive: true }, target: '目标 ↑30%', color: C.purple, icon: <Package size={20} /> },
+        { label: '超级个体数', value: '3人', progress: { current: 3, total: 15, label: '3 / 15' }, target: '目标 15人', color: C.orange, icon: <UserCheck size={20} /> },
+      ],
+    },
+    {
+      ...ALL_TEAMS_STATIC[3],
+      metrics: [
+        { label: 'AI 代码占比', value: '43%', trend: { text: '↑18%', positive: true }, target: '目标 60%', color: C.blue, icon: <Bot size={20} /> },
+        { label: '需求交付周期', value: '9.2天', trend: { text: '↓9%', positive: true }, target: '目标 ↓25%', color: C.green, icon: <Zap size={20} /> },
+        { label: '月交付需求', value: '36个', trend: { text: '↑14%', positive: true }, target: '目标 ↑30%', color: C.purple, icon: <Package size={20} /> },
+        { label: '超级个体数', value: '2人', progress: { current: 2, total: 12, label: '2 / 12' }, target: '目标 12人', color: C.orange, icon: <UserCheck size={20} /> },
+      ],
+    },
+    {
+      ...ALL_TEAMS_STATIC[4],
+      metrics: [
+        { label: 'AI 代码占比', value: '38%', trend: { text: '↑18%', positive: true }, target: '目标 60%', color: C.blue, icon: <Bot size={20} /> },
+        { label: '需求交付周期', value: '10.1天', trend: { text: '↓7%', positive: true }, target: '目标 ↓25%', color: C.green, icon: <Zap size={20} /> },
+        { label: '月交付需求', value: '28个', trend: { text: '↑11%', positive: true }, target: '目标 ↑30%', color: C.purple, icon: <Package size={20} /> },
+        { label: '超级个体数', value: '1人', progress: { current: 1, total: 10, label: '1 / 10' }, target: '目标 10人', color: C.orange, icon: <UserCheck size={20} /> },
+      ],
+    },
+  ];
+
+  const MATURITY_DATA = [
+    { level: 'L1 AI Coding', pct: 78, color: C.blue },
+    { level: 'L2 AI Developing', pct: 18, color: C.purple },
+    { level: 'L3 AI Engineering', pct: 4, color: C.green },
+  ];
+
   const teamOptions = [{ id: 'all', name: '全部团队' }, ...ALL_TEAMS.map(t => ({ id: t.id, name: t.name }))];
   const filteredTeams = selectedTeam === 'all' ? ALL_TEAMS : ALL_TEAMS.filter(t => t.id === selectedTeam);
   const isAll = selectedTeam === 'all';
@@ -488,7 +511,7 @@ const TeamView: React.FC<{ period: Period }> = ({ period }) => {
                     <span style={{ fontSize: 13, color: C.text, fontWeight: 600 }}>{d.level}</span>
                     <span style={{ fontSize: 13, color: d.color, fontWeight: 700 }}>{d.pct}%</span>
                   </div>
-                  <div style={{ height: 10, borderRadius: 5, background: 'rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+                  <div style={{ height: 10, borderRadius: 5, background: C.border, overflow: 'hidden' }}>
                     <div style={{ height: '100%', borderRadius: 5, background: `linear-gradient(90deg, ${d.color}cc, ${d.color})`, width: `${d.pct}%`, transition: 'width 0.8s ease' }} />
                   </div>
                   <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>{d.pct}% 的需求</div>
@@ -503,7 +526,7 @@ const TeamView: React.FC<{ period: Period }> = ({ period }) => {
       {!isAll && filteredTeams.map(team => (
         <div key={team.id} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
           {/* Team header */}
-          <div style={{ padding: '24px', borderRadius: 14, background: `linear-gradient(135deg, #1a2235 0%, #1a1a3a 100%)`, border: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ padding: '24px', borderRadius: 14, background: C.card, border: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
               <div style={{ fontSize: 20, fontWeight: 800, color: C.text, marginBottom: 6 }}>{team.name}</div>
               <div style={{ display: 'flex', gap: 8 }}>
@@ -586,6 +609,7 @@ const TeamView: React.FC<{ period: Period }> = ({ period }) => {
 };
 
 const TeamLineChart: React.FC<{ data: number[]; color: string }> = ({ data, color }) => {
+  const C = useTheme();
   const W = 560; const H = 160; const padL = 48; const padR = 20; const padT = 20; const padB = 36;
   const chartW = W - padL - padR; const chartH = H - padT - padB;
   const minVal = 15; const maxVal = 65;
@@ -625,6 +649,7 @@ const TeamLineChart: React.FC<{ data: number[]; color: string }> = ({ data, colo
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const MetricsDashboardPage: React.FC = () => {
+  const C = useTheme();
   const [period, setPeriod] = useState<Period>('本月');
   const [viewMode, setViewMode] = useState<ViewMode>('personal');
   const periods: Period[] = ['本周', '本月', '本季度'];
@@ -637,7 +662,7 @@ const MetricsDashboardPage: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 32 }}>
           <div>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 14px', borderRadius: 20, background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.25)', color: C.purple, fontSize: 12, fontWeight: 600, marginBottom: 12 }}>
-              📊 效能度量大盘
+              <BarChart2 size={14} /> 效能度量大盘
             </div>
             <h1 style={{ fontSize: 30, fontWeight: 800, color: C.text, margin: '0 0 6px', letterSpacing: '-0.4px' }}>AI 研发效能度量大盘</h1>
             <p style={{ fontSize: 14, color: C.muted, margin: 0 }}>实时追踪 AI 赋能研发效能的核心指标</p>
@@ -652,12 +677,16 @@ const MetricsDashboardPage: React.FC = () => {
 
         {/* View mode toggle */}
         <div style={{ display: 'flex', gap: 0, marginBottom: 28, borderRadius: 12, overflow: 'hidden', border: `1px solid ${C.border}`, width: 'fit-content', background: C.card }}>
-          {([['personal', '👤 个人视角'], ['team', '👥 团队视角']] as [ViewMode, string][]).map(([mode, label]) => (
-            <button key={mode} onClick={() => setViewMode(mode)} style={{
+          {([
+            ['personal', <><span>👤</span> 个人视角</>] as [ViewMode, React.ReactElement],
+            ['team', <><Users size={14} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 4 }} /> 团队视角</>] as [ViewMode, React.ReactElement],
+          ]).map(([mode, label]) => (
+            <button key={mode} onClick={() => setViewMode(mode as ViewMode)} style={{
               padding: '10px 28px', border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 600, transition: 'all 0.2s',
               background: viewMode === mode ? C.blue : 'transparent',
               color: viewMode === mode ? '#fff' : C.muted,
               boxShadow: viewMode === mode ? 'inset 0 0 0 1px rgba(255,255,255,0.1)' : 'none',
+              display: 'inline-flex', alignItems: 'center', gap: 6,
             }}>{label}</button>
           ))}
         </div>

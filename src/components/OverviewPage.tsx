@@ -1,28 +1,11 @@
 import React, { useState, useEffect } from 'react';
-
-// ─── Design Tokens ───────────────────────────────────────────────
-const C = {
-  bg: '#0a0f1e',
-  card: '#1a2235',
-  cardHover: '#1e2a40',
-  border: '#1e2d45',
-  borderHover: '#2d4060',
-  text: '#f1f5f9',
-  muted: '#94a3b8',
-  blue: '#3b82f6',
-  blueLight: '#60a5fa',
-  green: '#10b981',
-  greenLight: '#34d399',
-  purple: '#8b5cf6',
-  purpleLight: '#a78bfa',
-  orange: '#f59e0b',
-  radius: '12px',
-  radiusSm: '8px',
-};
+import { Bot, RefreshCw, ClipboardList, Brain, BarChart2, ShieldCheck, Map, Zap, Wrench, Sparkles, Building2, TrendingUp, Link } from 'lucide-react';
+import { useTheme } from '../ThemeContext';
 
 // ─── Keyframe injection ───────────────────────────────────────────
-const injectStyles = () => {
-  if (document.getElementById('overview-styles')) return;
+const injectStyles = (C: ReturnType<typeof useTheme>) => {
+  const existing = document.getElementById('overview-styles');
+  if (existing) existing.remove();
   const style = document.createElement('style');
   style.id = 'overview-styles';
   style.textContent = `
@@ -46,7 +29,7 @@ const injectStyles = () => {
       0%, 100% { transform: translateY(0px); }
       50%       { transform: translateY(-8px); }
     }
-    .overview-card:hover { background: ${C.cardHover} !important; border-color: ${C.borderHover} !important; transform: translateY(-2px); }
+    .overview-card:hover { background: ${C.card} !important; border-color: ${C.blue}40 !important; transform: translateY(-2px); }
     .overview-card { transition: background 0.2s, border-color 0.2s, transform 0.2s; }
     .arch-card:hover { border-color: var(--arch-color) !important; box-shadow: 0 0 24px var(--arch-glow) !important; transform: translateY(-3px); }
     .arch-card { transition: border-color 0.3s, box-shadow 0.3s, transform 0.3s; }
@@ -55,7 +38,7 @@ const injectStyles = () => {
     .feature-card:hover { border-color: var(--fc-color) !important; box-shadow: 0 0 20px var(--fc-glow) !important; transform: translateY(-3px); }
     .feature-card { transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s; }
     .shimmer-text {
-      background: linear-gradient(90deg, ${C.blue} 0%, ${C.purple} 35%, ${C.blueLight} 50%, ${C.purple} 65%, ${C.blue} 100%);
+      background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 35%, #60a5fa 50%, #8b5cf6 65%, #3b82f6 100%);
       background-size: 200% auto;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -72,8 +55,8 @@ const injectStyles = () => {
       transition: color 0.15s, background 0.15s;
       white-space: nowrap;
     }
-    .topnav-btn:hover { background: rgba(255,255,255,0.06) !important; color: #cbd5e1 !important; }
-    .topnav-btn.active { color: #60a5fa !important; background: rgba(59,130,246,0.12) !important; }
+    .topnav-btn:hover { background: ${C.border}60 !important; color: ${C.text} !important; }
+    .topnav-btn.active { color: ${C.blue} !important; background: ${C.blue}20 !important; }
     @media (max-width: 900px) {
       .arch-grid { grid-template-columns: 1fr !important; }
       .level-grid { grid-template-columns: 1fr !important; }
@@ -93,33 +76,38 @@ const injectStyles = () => {
 
 // ─── Sub-components ───────────────────────────────────────────────
 
-const SectionTitle: React.FC<{ children: React.ReactNode; accent?: string }> = ({ children, accent = C.blue }) => (
-  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
-    <div style={{ width: 4, height: 24, background: accent, borderRadius: 2, flexShrink: 0 }} />
-    <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: C.text, letterSpacing: '-0.3px' }}>{children}</h2>
-  </div>
-);
+const SectionTitle: React.FC<{ children: React.ReactNode; accent?: string }> = ({ children, accent }) => {
+  const C = useTheme();
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
+      <div style={{ width: 4, height: 24, background: accent ?? C.blue, borderRadius: 2, flexShrink: 0 }} />
+      <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: C.text, letterSpacing: '-0.3px' }}>{children}</h2>
+    </div>
+  );
+};
 
 // ─── Top Navigation Bar ───────────────────────────────────────────
-const NAV_ITEMS = [
-  { icon: '🗺️', label: '整体方案' },
-  { icon: '🧠', label: '知识管理' },
-  { icon: '⚡', label: '研发流程' },
-  { icon: '📊', label: '效能大盘' },
-  { icon: '🛠️', label: '工具列表' },
-  { icon: '📋', label: '使用规范' },
+const NAV_ITEMS: { icon: React.ReactElement; label: string }[] = [
+  { icon: <Map size={14} />, label: '整体方案' },
+  { icon: <Brain size={14} />, label: '知识管理' },
+  { icon: <Zap size={14} />, label: '研发流程' },
+  { icon: <BarChart2 size={14} />, label: '效能大盘' },
+  { icon: <Wrench size={14} />, label: '工具列表' },
+  { icon: <ClipboardList size={14} />, label: '使用规范' },
 ];
 
 interface TopNavProps {
   onNavigate: (index: number) => void;
   currentIndex?: number;
 }
-const TopNav: React.FC<TopNavProps> = ({ onNavigate, currentIndex = 0 }) => (
+const TopNav: React.FC<TopNavProps> = ({ onNavigate, currentIndex = 0 }) => {
+  const C = useTheme();
+  return (
   <div style={{
     position: 'sticky',
     top: 0,
     zIndex: 200,
-    background: 'rgba(10,15,30,0.92)',
+    background: C.sidebarBg,
     backdropFilter: 'blur(12px)',
     WebkitBackdropFilter: 'blur(12px)',
     borderBottom: `1px solid ${C.border}`,
@@ -168,7 +156,7 @@ const TopNav: React.FC<TopNavProps> = ({ onNavigate, currentIndex = 0 }) => (
                 borderRadius: 8,
                 fontSize: 13,
                 fontWeight: isActive ? 600 : 400,
-                color: isActive ? C.blueLight : C.muted,
+                color: isActive ? C.blue : C.muted,
                 background: isActive ? 'rgba(59,130,246,0.12)' : 'transparent',
                 position: 'relative',
               }}
@@ -193,18 +181,21 @@ const TopNav: React.FC<TopNavProps> = ({ onNavigate, currentIndex = 0 }) => (
       </div>
     </div>
   </div>
-);
+  );
+};
 
 // ─── Feature Card ─────────────────────────────────────────────────
 interface FeatureCardProps {
-  icon: string;
+  icon: React.ReactElement;
   title: string;
   desc: string;
   color: string;
   glow: string;
   index: number;
 }
-const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, desc, color, glow, index }) => (
+const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, desc, color, glow, index }) => {
+  const C = useTheme();
+  return (
   <div
     className="feature-card"
     style={{ '--fc-color': color, '--fc-glow': glow } as React.CSSProperties & Record<string, string>}
@@ -239,7 +230,8 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, desc, color, glo
       }} />
     </div>
   </div>
-);
+  );
+};
 
 // ─── Arch Card ────────────────────────────────────────────────────
 interface ArchCardProps {
@@ -249,10 +241,12 @@ interface ArchCardProps {
   bullets: string[];
   color: string;
   glow: string;
-  icon: string;
+  icon: React.ReactElement;
   index: number;
 }
-const ArchCard: React.FC<ArchCardProps> = ({ layer, name, desc, bullets, color, glow, icon, index }) => (
+const ArchCard: React.FC<ArchCardProps> = ({ layer, name, desc, bullets, color, glow, icon, index }) => {
+  const C = useTheme();
+  return (
   <div
     className="arch-card"
     style={{ '--arch-color': color, '--arch-glow': glow } as React.CSSProperties & Record<string, string>}
@@ -287,7 +281,8 @@ const ArchCard: React.FC<ArchCardProps> = ({ layer, name, desc, bullets, color, 
       </ul>
     </div>
   </div>
-);
+  );
+};
 
 // ─── Level Card ───────────────────────────────────────────────────
 interface LevelCardProps {
@@ -300,7 +295,9 @@ interface LevelCardProps {
   features: string[];
   index: number;
 }
-const LevelCard: React.FC<LevelCardProps> = ({ level, title, subtitle, criteria, color, bg, features, index }) => (
+const LevelCard: React.FC<LevelCardProps> = ({ level, title, subtitle, criteria, color, bg, features, index }) => {
+  const C = useTheme();
+  return (
   <div
     className="level-card"
     style={{
@@ -334,7 +331,8 @@ const LevelCard: React.FC<LevelCardProps> = ({ level, title, subtitle, criteria,
       </ul>
     </div>
   </div>
-);
+  );
+};
 
 // ─── Main Component ───────────────────────────────────────────────
 
@@ -343,13 +341,14 @@ interface OverviewPageProps {
 }
 
 const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
+  const C = useTheme();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    injectStyles();
+    injectStyles(C);
     const t = setTimeout(() => setVisible(true), 50);
     return () => clearTimeout(t);
-  }, []);
+  }, [C]);
 
   const handleNavigate = (index: number) => {
     if (onNavigate) onNavigate(index);
@@ -357,7 +356,7 @@ const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
 
   const features: FeatureCardProps[] = [
     {
-      icon: '🤖',
+      icon: <Bot size={22} />,
       title: '多 Agent 并行',
       desc: 'Codex / Claude / Gemini 协同工作，任务自动分配给最合适的模型，并行执行提升交付速度。',
       color: C.blue,
@@ -365,7 +364,7 @@ const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
       index: 0,
     },
     {
-      icon: '🔄',
+      icon: <RefreshCw size={22} />,
       title: 'Ralph Loop V2',
       desc: '失败自动分析根因，用更智能的 prompt 策略重试，持续学习让成功率越来越高。',
       color: C.green,
@@ -373,7 +372,7 @@ const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
       index: 1,
     },
     {
-      icon: '📋',
+      icon: <ClipboardList size={22} />,
       title: '全流程追踪',
       desc: '从需求到 PR，每个节点可视化呈现。任务链路清晰，随时掌握交付进度与质量状态。',
       color: C.purple,
@@ -381,7 +380,7 @@ const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
       index: 2,
     },
     {
-      icon: '🧠',
+      icon: <Brain size={22} />,
       title: '知识沉淀',
       desc: '每次交付自动提炼团队知识，积累业务领域资产，让 AI 越用越懂你的项目。',
       color: C.orange,
@@ -389,18 +388,18 @@ const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
       index: 3,
     },
     {
-      icon: '📊',
+      icon: <BarChart2 size={22} />,
       title: '效能度量',
       desc: '个人和团队双视角效能大盘，AI 贡献度、交付质量、研发速度一目了然。',
-      color: C.blueLight,
+      color: '#60a5fa',
       glow: 'rgba(96,165,250,0.15)',
       index: 4,
     },
     {
-      icon: '🛡️',
+      icon: <ShieldCheck size={22} />,
       title: '评审卡点',
       desc: '4 个关键节点设置评审门禁，AI 辅助人工判断，在速度与质量之间找到最优平衡。',
-      color: C.greenLight,
+      color: '#34d399',
       glow: 'rgba(52,211,153,0.15)',
       index: 5,
     },
@@ -419,7 +418,7 @@ const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
       ],
       color: C.blue,
       glow: 'rgba(59,130,246,0.15)',
-      icon: '🧠',
+      icon: <Brain size={22} />,
       index: 0,
     },
     {
@@ -434,7 +433,7 @@ const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
       ],
       color: C.green,
       glow: 'rgba(16,185,129,0.15)',
-      icon: '🤖',
+      icon: <Bot size={22} />,
       index: 1,
     },
     {
@@ -449,7 +448,7 @@ const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
       ],
       color: C.purple,
       glow: 'rgba(139,92,246,0.15)',
-      icon: '🔗',
+      icon: <Link size={22} />,
       index: 2,
     },
   ];
@@ -527,7 +526,7 @@ const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
             background: 'rgba(59,130,246,0.1)',
             border: `1px solid rgba(59,130,246,0.28)`,
             borderRadius: 20, padding: '6px 18px', marginBottom: 28,
-            fontSize: 12, color: C.blueLight, fontWeight: 600, letterSpacing: '0.5px',
+            fontSize: 12, color: '#60a5fa', fontWeight: 600, letterSpacing: '0.5px',
             animation: 'fadeUp 0.5s ease both',
           }}>
             <span
@@ -617,7 +616,7 @@ const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
               }}
               onMouseEnter={e => {
                 const btn = e.currentTarget as HTMLButtonElement;
-                btn.style.borderColor = C.borderHover;
+                btn.style.borderColor = '#2d4060';
                 btn.style.color = C.text;
                 btn.style.background = 'rgba(255,255,255,0.08)';
               }}
@@ -632,22 +631,6 @@ const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
             </button>
           </div>
 
-          {/* Stats row */}
-          <div style={{
-            display: 'flex', justifyContent: 'center', gap: 48, marginTop: 56,
-            flexWrap: 'wrap', animation: 'fadeUp 0.6s ease 0.38s both',
-          }}>
-            {[
-              { label: '目标 AI 代码占比', value: '60%', color: C.blue },
-              { label: '标杆业务', value: '5 个', color: C.green },
-              { label: '超级个体', value: '100 人', color: C.purple },
-            ].map(({ label, value, color }) => (
-              <div key={label} style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 28, fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
-                <div style={{ fontSize: 12, color: C.muted, marginTop: 6 }}>{label}</div>
-              </div>
-            ))}
-          </div>
         </div>
       </div>
 
@@ -655,7 +638,7 @@ const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
 
         {/* ── Feature Cards ─────────────────────────────────────── */}
         <section style={{ marginBottom: 64 }}>
-          <SectionTitle accent={C.blue}>✨ 产品特性</SectionTitle>
+          <SectionTitle accent={C.blue}><Sparkles size={16} style={{display:'inline',verticalAlign:'middle',marginRight:6}} /> 产品特性</SectionTitle>
           <div
             className="features-grid"
             style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}
@@ -668,7 +651,7 @@ const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
 
         {/* ── Architecture ─────────────────────────────────────── */}
         <section style={{ marginBottom: 64 }}>
-          <SectionTitle accent={C.green}>🏗️ 三层架构体系</SectionTitle>
+          <SectionTitle accent={C.green}><Building2 size={16} style={{display:'inline',verticalAlign:'middle',marginRight:6}} /> 三层架构体系</SectionTitle>
           {/* Layer connection visual */}
           <div style={{
             background: C.card,
@@ -711,7 +694,7 @@ const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
 
         {/* ── Maturity Levels ──────────────────────────────────── */}
         <section style={{ marginBottom: 8 }}>
-          <SectionTitle accent={C.purple}>📈 成熟度模型</SectionTitle>
+          <SectionTitle accent={C.purple}><TrendingUp size={16} style={{display:'inline',verticalAlign:'middle',marginRight:6}} /> 成熟度模型</SectionTitle>
           {/* Progress bar visual */}
           <div style={{
             background: C.card, border: `1px solid ${C.border}`, borderRadius: C.radius,
