@@ -2001,7 +2001,7 @@ const RepoList: React.FC<{
   const blueLight = C.blue;
   const purpleLight = C.purple;
   const inputBg = C.bg;
-  const [tab, setTab] = useState<'mine' | 'all' | 'chat'>('mine');
+  const [tab, setTab] = useState<'mine' | 'all' | 'chat' | 'experience'>('mine');
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<'all' | KnowledgeCategory>('all');
   const [filterType, setFilterType] = useState<string>('all');
@@ -2021,9 +2021,10 @@ const RepoList: React.FC<{
     : KNOWLEDGE_TYPES.filter(t => t.category === filterCategory);
 
   const LIST_TABS = [
-    { key: 'mine' as const,  label: '我的知识库', count: repos.filter(r => r.isMine).length },
-    { key: 'all'  as const,  label: '全部知识库', count: repos.length },
-    { key: 'chat' as const,  label: '💬 跨库对话', count: undefined },
+    { key: 'mine'       as const, label: '我的知识库', count: repos.filter(r => r.isMine).length },
+    { key: 'all'        as const, label: '全部知识库', count: repos.length },
+    { key: 'chat'       as const, label: '💬 跨库对话', count: undefined },
+    { key: 'experience' as const, label: '⚡ 实战经验', count: MOCK_EXPERIENCES.length },
   ];
 
   return (
@@ -2036,11 +2037,15 @@ const RepoList: React.FC<{
           const isChat = key === 'chat';
           return (
             <button key={key} className="kn-tab"
-              onClick={() => { setTab(key); if (!isChat) { setFilterType('all'); setFilterCategory('all'); } }}
+              onClick={() => {
+                setTab(key);
+                const isSpecial = key === 'chat' || key === 'experience';
+                if (!isSpecial) { setFilterType('all'); setFilterCategory('all'); }
+              }}
               style={{
                 background: 'transparent', border: 'none',
-                borderBottom: `2px solid ${active ? (isChat ? C.purple : C.blue) : 'transparent'}`,
-                padding: '10px 20px', color: active ? (isChat ? purpleLight : blueLight) : C.muted,
+                borderBottom: `2px solid ${active ? (isChat ? C.purple : key === 'experience' ? C.green : C.blue) : 'transparent'}`,
+                padding: '10px 20px', color: active ? (isChat ? purpleLight : key === 'experience' ? C.green : blueLight) : C.muted,
                 cursor: 'pointer', fontSize: 14, fontWeight: active ? 700 : 400,
                 transition: 'color 0.15s, border-color 0.15s',
                 display: 'flex', alignItems: 'center', gap: 6,
@@ -2050,7 +2055,7 @@ const RepoList: React.FC<{
               {count !== undefined && (
                 <span style={{
                   fontSize: 11, fontWeight: 700,
-                  background: active ? (isChat ? C.purple : C.blue) : C.border,
+                  background: active ? (isChat ? C.purple : key === 'experience' ? C.green : C.blue) : C.border,
                   color: active ? '#fff' : C.muted,
                   borderRadius: 10, padding: '1px 6px',
                 }}>{count}</span>
@@ -2089,7 +2094,12 @@ const RepoList: React.FC<{
         </div>
       )}
       {tab === 'chat' && null /* 后续 return 提前退出 */}
-      {tab !== 'chat' && (<>
+      {tab === 'experience' && (
+        <div style={{ animation: 'fadeUp 0.3s ease' }}>
+          <ExperienceTab onEnterRepo={_typeKey => {/* TODO: 跳转到对应知识库 */}} />
+        </div>
+      )}
+      {tab !== 'chat' && tab !== 'experience' && (<>
 
       {/* ── Search + Filter ── */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
