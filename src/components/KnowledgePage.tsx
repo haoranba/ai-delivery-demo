@@ -992,6 +992,75 @@ const CommitsTab: React.FC<{ repo: KnowledgeRepo }> = ({ repo }) => {
   );
 };
 
+// ─── Experience Tab ───────────────────────────────────────────────
+
+const HEAT_COLOR = (count: number, C: ColorTokens) => {
+  if (count >= 9) return C.red ?? '#ef4444';
+  if (count >= 4) return C.orange;
+  return C.blue;
+};
+
+const ExperienceCard: React.FC<{
+  exp: PracticalExperience;
+  selected: boolean;
+  onClick: () => void;
+}> = ({ exp, selected, onClick }) => {
+  const C = useTheme();
+  const heatColor = HEAT_COLOR(exp.triggerCount, C);
+  const heatPct = Math.min(100, (exp.triggerCount / 15) * 100);
+  const typeConfig = getTypeConfig(exp.knowledgeTypeKey);
+
+  return (
+    <div
+      className={`exp-card${selected ? ' selected' : ''}`}
+      onClick={onClick}
+      style={{
+        background: C.card, border: `1px solid ${selected ? C.blue : C.border}`,
+        borderRadius: C.radius, padding: '14px 16px', cursor: 'pointer', marginBottom: 10,
+      }}
+    >
+      {/* Title */}
+      <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 8, lineHeight: 1.4 }}>
+        {exp.type === 'pitfall' ? '🪤' : '✨'} {exp.title}
+      </div>
+
+      {/* Heat bar + count + tag + verified */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+        {/* Heat bar */}
+        <div style={{ flex: '1 1 80px', maxWidth: 100, height: 4, background: C.border, borderRadius: 2, overflow: 'hidden' }}>
+          <div style={{ width: `${heatPct}%`, height: '100%', background: heatColor, borderRadius: 2, transition: 'width 0.4s ease' }} />
+        </div>
+        {/* Count */}
+        <span style={{ fontSize: 11, fontWeight: 700, color: heatColor }}>×{exp.triggerCount}</span>
+        {/* Type tag */}
+        <span style={{
+          fontSize: 10, padding: '1px 6px', borderRadius: 4,
+          background: `${typeConfig.color}18`, color: typeConfig.color, fontWeight: 600,
+        }}>
+          {exp.knowledgeTypeKey}
+        </span>
+        {/* Verified */}
+        {exp.verified && (
+          <span style={{ fontSize: 10, color: '#10b981', fontWeight: 700 }}>✓ 已验证</span>
+        )}
+      </div>
+
+      {/* Summary */}
+      <p style={{
+        margin: '0 0 8px', fontSize: 12, color: C.muted, lineHeight: 1.6,
+        display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+      }}>
+        {exp.summary}
+      </p>
+
+      {/* Footer */}
+      <div style={{ fontSize: 11, color: C.border }}>
+        {exp.createdAt} · {exp.contributions[0]?.author}
+      </div>
+    </div>
+  );
+};
+
 // ─── Detail Page ──────────────────────────────────────────────────
 type DetailTab = 'docs' | 'prs' | 'members' | 'chat' | 'commits';
 
