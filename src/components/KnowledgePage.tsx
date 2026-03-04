@@ -1052,19 +1052,43 @@ const ExperienceCard: React.FC<{
         }}>
           {exp.knowledgeTypeKey}
         </span>
-        {/* Verified */}
-        {exp.confidence_level === 'canonical' && (
-          <span style={{ fontSize: 10, color: '#10b981', fontWeight: 700 }}>✓ 已验证</span>
-        )}
+        {/* Confidence level */}
+        {(() => {
+          const cfg = {
+            canonical:   { color: '#10b981', label: '典范' },
+            established: { color: '#3b82f6', label: '确立' },
+            emerging:    { color: '#9ca3af', label: '萌芽' },
+          }[exp.confidence_level];
+          return (
+            <span style={{ fontSize: 10, color: cfg.color, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3 }}>
+              <span style={{ fontSize: 8 }}>●</span>{cfg.label}
+            </span>
+          );
+        })()}
       </div>
 
       {/* Summary */}
       <p style={{
-        margin: '0 0 8px', fontSize: 12, color: C.muted, lineHeight: 1.6,
+        margin: '0 0 6px', fontSize: 12, color: C.muted, lineHeight: 1.6,
         display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
       }}>
         {exp.summary}
       </p>
+
+      {/* Signals */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
+        {exp.signals_match.slice(0, 3).map(s => (
+          <span key={s} style={{
+            fontSize: 10, fontFamily: 'monospace', padding: '1px 5px',
+            borderRadius: 3, border: `1px solid ${C.border}`, color: C.muted,
+          }}>
+            {s}
+          </span>
+        ))}
+        {exp.signals_match.length > 3 && (
+          <span style={{ fontSize: 10, color: C.muted }}>+{exp.signals_match.length - 3}</span>
+        )}
+      </div>
 
       {/* Footer */}
       <div style={{ fontSize: 11, color: C.border }}>
