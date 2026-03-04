@@ -1007,93 +1007,77 @@ const CommitsTab: React.FC<{ repo: KnowledgeRepo }> = ({ repo }) => {
 
 // ─── Experience Tab ───────────────────────────────────────────────
 
-const HEAT_COLOR = (instanceCount: number, C: ColorTokens) => {
-  if (instanceCount >= 9) return C.red ?? '#ef4444';
-  if (instanceCount >= 4) return C.orange;
-  return C.blue;
-};
-
 const ExperienceCard: React.FC<{
   exp: ExperienceWithInstances;
-  selected: boolean;
-  onClick: () => void;
-}> = ({ exp, selected, onClick }) => {
+  onEnterRepo: (repoKey: string) => void;
+}> = ({ exp, onEnterRepo }) => {
   const C = useTheme();
-  const heatColor = HEAT_COLOR(exp.instanceCount, C);
-  const heatPct = Math.min(100, (exp.instanceCount / 15) * 100);
-  const typeConfig = getTypeConfig(exp.knowledgeTypeKey);
+  const [showTrace, setShowTrace] = useState(false);
+  const confidenceLabel = { canonical: '典范', established: '确立', emerging: '萌芽' }[exp.confidence_level];
 
   return (
-    <div
-      className={`exp-card${selected ? ' selected' : ''}`}
-      onClick={onClick}
-      style={{
-        background: C.card, border: `1px solid ${selected ? C.blue : C.border}`,
-        borderRadius: C.radius, padding: '14px 16px', cursor: 'pointer', marginBottom: 10,
-      }}
-    >
+    <div style={{
+      background: C.card, border: `1px solid ${C.border}`,
+      borderRadius: C.radius, padding: '20px 22px', marginBottom: 14,
+    }}>
       {/* Title */}
-      <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 8, lineHeight: 1.4 }}>
+      <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 10, lineHeight: 1.5 }}>
         {exp.type === 'pitfall' ? '🪤' : '✨'} {exp.title}
       </div>
 
-      {/* Heat bar + count + tag + verified */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
-        {/* Heat bar */}
-        <div style={{ flex: '1 1 80px', maxWidth: 100, height: 4, background: C.border, borderRadius: 2, overflow: 'hidden' }}>
-          <div style={{ width: `${heatPct}%`, height: '100%', background: heatColor, borderRadius: 2, transition: 'width 0.4s ease' }} />
-        </div>
-        {/* Count */}
-        <span style={{ fontSize: 11, fontWeight: 700, color: heatColor }}>×{exp.instanceCount}</span>
-        {/* Type tag */}
-        <span style={{
-          fontSize: 10, padding: '1px 6px', borderRadius: 4,
-          background: `${typeConfig.color}18`, color: typeConfig.color, fontWeight: 600,
-        }}>
-          {exp.knowledgeTypeKey}
-        </span>
-        {/* Confidence level */}
-        {(() => {
-          const cfg = {
-            canonical:   { color: '#10b981', label: '典范' },
-            established: { color: '#3b82f6', label: '确立' },
-            emerging:    { color: '#9ca3af', label: '萌芽' },
-          }[exp.confidence_level];
-          return (
-            <span style={{ fontSize: 10, color: cfg.color, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3 }}>
-              <span style={{ fontSize: 8 }}>●</span>{cfg.label}
-            </span>
-          );
-        })()}
-      </div>
-
       {/* Summary */}
-      <p style={{
-        margin: '0 0 6px', fontSize: 12, color: C.muted, lineHeight: 1.6,
-        display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-      }}>
+      <p style={{ margin: '0 0 12px', fontSize: 13, color: C.text, lineHeight: 1.7 }}>
         {exp.summary}
       </p>
 
-      {/* Signals */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
-        {exp.signals_match.slice(0, 3).map(s => (
-          <span key={s} style={{
-            fontSize: 10, fontFamily: 'monospace', padding: '1px 5px',
-            borderRadius: 3, border: `1px solid ${C.border}`, color: C.muted,
-          }}>
-            {s}
-          </span>
-        ))}
-        {exp.signals_match.length > 3 && (
-          <span style={{ fontSize: 10, color: C.muted }}>+{exp.signals_match.length - 3}</span>
-        )}
+      {/* Meta */}
+      <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.9, marginBottom: 10 }}>
+        <div>触发信号　{exp.signals_match.join(' · ')}</div>
+        <div>{exp.knowledgeTypeKey} · {confidenceLabel} · ×{exp.instanceCount} · {exp.createdAt}</div>
       </div>
 
-      {/* Footer */}
-      <div style={{ fontSize: 11, color: C.border }}>
-        {exp.createdAt} · {exp.instances[0]?.author}
+      {/* Trace toggle */}
+      <div
+        onClick={() => setShowTrace(v => !v)}
+        style={{
+          display: 'flex', alignItems: 'center', cursor: 'pointer',
+          borderTop: `1px solid ${C.border}`, paddingTop: 10,
+          fontSize: 12, color: C.muted, userSelect: 'none',
+        }}
+      >
+        <span>📎 溯源对话（{exp.instances.length} 次）</span>
+        <span style={{ marginLeft: 'auto' }}>{showTrace ? '▴' : '▾'}</span>
       </div>
+
+      {/* Trace conversations */}
+      {showTrace && (
+        <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {exp.instances.map((c, i) => (
+            <div key={i} style={{ borderLeft: `2px solid ${C.border}`, paddingLeft: 12 }}>
+              <div style={{ fontSize: 11, color: C.muted, marginBottom: 4 }}>
+                {c.avatar} {c.author} · {c.date}
+                <span style={{ marginLeft: 6, color: SIGNAL_COLOR(c.signal, C) }}>{SIGNAL_LABEL(c.signal)}</span>
+              </div>
+              <div style={{ fontSize: 12, color: C.muted, marginBottom: 4, lineHeight: 1.6 }}>
+                <span style={{ fontWeight: 600, color: C.text }}>用户：</span>{c.userMessage}
+              </div>
+              <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.6 }}>
+                <span style={{ fontWeight: 600, color: C.blue }}>AI：</span>{c.aiResponse}
+              </div>
+            </div>
+          ))}
+          <button
+            onClick={() => onEnterRepo(exp.knowledgeTypeKey)}
+            style={{
+              alignSelf: 'flex-start', background: 'none', border: `1px solid ${C.border}`,
+              borderRadius: 6, padding: '4px 10px', color: C.muted,
+              fontSize: 11, cursor: 'pointer', marginTop: 4,
+            }}
+          >
+            → 进入{exp.knowledgeTypeKey}知识库
+          </button>
+        </div>
+      )}
     </div>
   );
 };
@@ -1106,94 +1090,6 @@ const SIGNAL_COLOR = (signal: ExperienceInstance['signal'], C: ColorTokens) => {
 const SIGNAL_LABEL = (signal: ExperienceInstance['signal']) =>
   ({ accepted: '采纳', modified: '修改', rejected: '拒绝' }[signal]);
 
-const TracePanel: React.FC<{
-  exp: ExperienceWithInstances;
-  onClose: () => void;
-  onEnterRepo: (repoKey: string) => void;
-}> = ({ exp, onClose, onEnterRepo }) => {
-  const C = useTheme();
-
-  return (
-    <div style={{
-      background: C.card, border: `1px solid ${C.border}`,
-      borderRadius: C.radius, padding: '16px 18px',
-      animation: 'slideIn 0.2s ease',
-      display: 'flex', flexDirection: 'column', gap: 0,
-      overflow: 'hidden',
-    }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div>
-          <div style={{ fontSize: 12, color: C.muted, marginBottom: 4 }}>📎 溯源对话</div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: C.text, lineHeight: 1.4 }}>
-            {exp.type === 'pitfall' ? '🪤' : '✨'} {exp.title}
-          </div>
-          <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>
-            来源：{exp.knowledgeTypeKey} · ×{exp.instanceCount} 次触发
-          </div>
-        </div>
-        <button
-          onClick={onClose}
-          style={{ background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 16, padding: 0, lineHeight: 1 }}
-        >
-          ✕
-        </button>
-      </div>
-
-      {/* Contributions */}
-      <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, marginBottom: 8 }}>
-        贡献对话（{exp.instances.length}次）
-      </div>
-      <div style={{ overflowY: 'auto', maxHeight: 420, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {exp.instances.map((c, i) => (
-          <div
-            key={i}
-            className="trace-contribution"
-            style={{
-              background: C.bg, border: `1px solid ${C.border}`,
-              borderRadius: 8, padding: '10px 12px',
-            }}
-          >
-            {/* Contribution header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span style={{ fontSize: 12, color: C.text }}>
-                {c.avatar} {c.author} · {c.date}
-              </span>
-              <span style={{
-                fontSize: 10, fontWeight: 700, padding: '1px 6px',
-                borderRadius: 4, background: `${SIGNAL_COLOR(c.signal, C)}18`,
-                color: SIGNAL_COLOR(c.signal, C),
-              }}>
-                {SIGNAL_LABEL(c.signal)}
-              </span>
-            </div>
-            {/* User message */}
-            <div style={{ fontSize: 12, color: C.muted, marginBottom: 6, lineHeight: 1.5 }}>
-              <span style={{ fontWeight: 600, color: C.text }}>用户：</span>{c.userMessage}
-            </div>
-            {/* AI response */}
-            <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.5 }}>
-              <span style={{ fontWeight: 600, color: C.blue }}>AI：</span>{c.aiResponse}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Footer action */}
-      <button
-        className="kn-btn"
-        onClick={() => onEnterRepo(exp.knowledgeTypeKey)}
-        style={{
-          marginTop: 14, background: C.blue, color: '#fff', border: 'none',
-          borderRadius: 8, padding: '8px 14px', cursor: 'pointer',
-          fontSize: 12, fontWeight: 700, textAlign: 'left',
-        }}
-      >
-        → 进入{exp.knowledgeTypeKey}知识库
-      </button>
-    </div>
-  );
-};
 
 const EXP_PAGE_SIZE = 2;
 
@@ -1206,8 +1102,6 @@ const ExperienceTab: React.FC<{ onEnterRepo: (typeKey: string) => void }> = ({ o
   const C = useTheme();
   const [innerTab, setInnerTab] = useState<'pitfall' | 'best_practice'>('pitfall');
   const [page, setPage] = useState(0);
-  const [selected, setSelected] = useState<ExperienceWithInstances | null>(null);
-
   const instancesByPattern = MOCK_INSTANCES.reduce<Record<string, ExperienceInstance[]>>(
     (acc, inst) => { (acc[inst.pattern_id] ??= []).push(inst); return acc; }, {}
   );
@@ -1228,11 +1122,7 @@ const ExperienceTab: React.FC<{ onEnterRepo: (typeKey: string) => void }> = ({ o
   const handleInnerTab = (key: 'pitfall' | 'best_practice') => {
     setInnerTab(key);
     setPage(0);
-    setSelected(null);
   };
-
-  const handleSelect = (exp: ExperienceWithInstances) =>
-    setSelected(prev => prev?.id === exp.id ? null : exp);
 
   return (
     <div style={{ animation: 'fadeUp 0.3s ease' }}>
@@ -1244,86 +1134,67 @@ const ExperienceTab: React.FC<{ onEnterRepo: (typeKey: string) => void }> = ({ o
         </span>
       </div>
 
-      {/* Left / Right layout */}
-      <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-
-        {/* Left: inner tabs + paginated list */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Inner tab bar */}
-          <div style={{ display: 'flex', borderBottom: `1px solid ${C.border}`, marginBottom: 14 }}>
-            {INNER_TABS.map(({ key, label }) => {
-              const active = innerTab === key;
-              const count = allPatterns.filter(e => e.type === key).length;
-              return (
-                <button key={key} className="kn-tab"
-                  onClick={() => handleInnerTab(key)}
-                  style={{
-                    background: 'transparent', border: 'none',
-                    borderBottom: `2px solid ${active ? C.blue : 'transparent'}`,
-                    padding: '8px 16px', color: active ? C.blue : C.muted,
-                    cursor: 'pointer', fontSize: 13, fontWeight: active ? 700 : 400,
-                    display: 'flex', alignItems: 'center', gap: 6,
-                    transition: 'color 0.15s, border-color 0.15s',
-                    marginBottom: -1,
-                  }}
-                >
-                  {label}
-                  <span style={{
-                    fontSize: 10, padding: '1px 6px', borderRadius: 8,
-                    background: active ? C.blue : C.border,
-                    color: active ? '#fff' : C.muted, fontWeight: 700,
-                  }}>{count}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Card list */}
-          <div>
-            {pageItems.map(exp => (
-              <ExperienceCard
-                key={exp.id}
-                exp={exp}
-                selected={selected?.id === exp.id}
-                onClick={() => handleSelect(exp)}
-              />
-            ))}
-          </div>
-
-          {/* Pagination */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 12 }}>
-            <button
-              onClick={() => setPage(p => Math.max(0, p - 1))}
-              disabled={page === 0}
+      {/* Inner tab bar */}
+      <div style={{ display: 'flex', borderBottom: `1px solid ${C.border}`, marginBottom: 14 }}>
+        {INNER_TABS.map(({ key, label }) => {
+          const active = innerTab === key;
+          const count = allPatterns.filter(e => e.type === key).length;
+          return (
+            <button key={key} className="kn-tab"
+              onClick={() => handleInnerTab(key)}
               style={{
-                background: 'none', border: `1px solid ${C.border}`, borderRadius: 6,
-                padding: '4px 12px', cursor: page === 0 ? 'not-allowed' : 'pointer',
-                color: page === 0 ? C.border : C.muted, fontSize: 13,
+                background: 'transparent', border: 'none',
+                borderBottom: `2px solid ${active ? C.blue : 'transparent'}`,
+                padding: '8px 16px', color: active ? C.blue : C.muted,
+                cursor: 'pointer', fontSize: 13, fontWeight: active ? 700 : 400,
+                display: 'flex', alignItems: 'center', gap: 6,
+                transition: 'color 0.15s, border-color 0.15s',
+                marginBottom: -1,
               }}
-            >‹</button>
-            <span style={{ fontSize: 12, color: C.muted }}>{page + 1} / {totalPages}</span>
-            <button
-              onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-              disabled={page === totalPages - 1}
-              style={{
-                background: 'none', border: `1px solid ${C.border}`, borderRadius: 6,
-                padding: '4px 12px', cursor: page === totalPages - 1 ? 'not-allowed' : 'pointer',
-                color: page === totalPages - 1 ? C.border : C.muted, fontSize: 13,
-              }}
-            >›</button>
-          </div>
-        </div>
+            >
+              {label}
+              <span style={{
+                fontSize: 10, padding: '1px 6px', borderRadius: 8,
+                background: active ? C.blue : C.border,
+                color: active ? '#fff' : C.muted, fontWeight: 700,
+              }}>{count}</span>
+            </button>
+          );
+        })}
+      </div>
 
-        {/* Right: TracePanel */}
-        {selected && (
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <TracePanel
-              exp={selected}
-              onClose={() => setSelected(null)}
-              onEnterRepo={onEnterRepo}
-            />
-          </div>
-        )}
+      {/* Card list */}
+      <div>
+        {pageItems.map(exp => (
+          <ExperienceCard
+            key={exp.id}
+            exp={exp}
+            onEnterRepo={onEnterRepo}
+          />
+        ))}
+      </div>
+
+      {/* Pagination */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 12 }}>
+        <button
+          onClick={() => setPage(p => Math.max(0, p - 1))}
+          disabled={page === 0}
+          style={{
+            background: 'none', border: `1px solid ${C.border}`, borderRadius: 6,
+            padding: '4px 12px', cursor: page === 0 ? 'not-allowed' : 'pointer',
+            color: page === 0 ? C.border : C.muted, fontSize: 13,
+          }}
+        >‹</button>
+        <span style={{ fontSize: 12, color: C.muted }}>{page + 1} / {totalPages}</span>
+        <button
+          onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
+          disabled={page === totalPages - 1}
+          style={{
+            background: 'none', border: `1px solid ${C.border}`, borderRadius: 6,
+            padding: '4px 12px', cursor: page === totalPages - 1 ? 'not-allowed' : 'pointer',
+            color: page === totalPages - 1 ? C.border : C.muted, fontSize: 13,
+          }}
+        >›</button>
       </div>
     </div>
   );
