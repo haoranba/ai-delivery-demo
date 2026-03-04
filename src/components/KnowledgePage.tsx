@@ -34,6 +34,11 @@ const injectStyles = (C: ColorTokens) => {
     .kn-pr-row { transition: background 0.12s; }
     .filter-chip:hover { border-color: ${C.blue} !important; color: ${C.text} !important; }
     .filter-chip { transition: border-color 0.15s, color 0.15s, background 0.15s; }
+    .exp-card:hover { background: ${C.border} !important; border-color: ${C.blue}60 !important; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+    .exp-card { transition: background 0.15s, border-color 0.15s, transform 0.2s, box-shadow 0.2s; }
+    .exp-card.selected { border-color: ${C.blue} !important; background: ${C.blue}0a !important; }
+    .trace-contribution:hover { background: ${C.border} !important; }
+    .trace-contribution { transition: background 0.12s; }
   `;
   document.head.appendChild(style);
 };
