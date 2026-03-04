@@ -61,6 +61,28 @@ const injectStyles = () => {
 // ─── Types ────────────────────────────────────────────────────────
 type KnowledgeCategory = 'business' | 'engineering';
 
+interface CommitItem {
+  hash: string;
+  message: string;
+  author: string;
+  avatar: string;
+  date: string;
+  additions: number;
+  deletions: number;
+  files: string[];
+}
+
+interface ChatMessage {
+  id: number;
+  role: 'user' | 'assistant';
+  content: string;
+  citations?: { file: string; snippet: string }[];
+  suggestUpdate?: boolean;
+  diffPreview?: { file: string; before: string; after: string };
+  prCreated?: { id: number; title: string; branch: string };
+  timestamp: string;
+}
+
 interface KnowledgeTypeConfig {
   key: string;
   label: string;
@@ -126,15 +148,24 @@ interface KnowledgeRepo {
   tree: TreeNode[];
   members: Member[];
   prs: PRItem[];
+  commits: CommitItem[];
 }
 
 // ─── Mock Data ────────────────────────────────────────────────────
+const MOCK_COMMITS_REPO1: CommitItem[] = [
+  { hash: 'f3a9c12', message: '修正 Saga 模式回滚说明中的错误示例', author: 'wangfang', avatar: '👩‍🔬', date: '3天前', additions: 24, deletions: 18, files: ['architecture/transaction/saga-pattern.md'] },
+  { hash: 'b7d2e45', message: '新增限流熔断配置规范文档', author: 'chenxiao', avatar: '🧑‍💻', date: '5天前', additions: 86, deletions: 0, files: ['architecture/stability/circuit-breaker.md'] },
+  { hash: '91c4f78', message: '更新分布式事务规范，补充 TCC 模式最佳实践', author: 'liuyang', avatar: '👩‍💻', date: '1周前', additions: 128, deletions: 12, files: ['architecture/transaction/distributed-tx.md'] },
+  { hash: '3e6a021', message: '补充 Code Review 必查项：禁止捕获 Exception 后只打日志', author: 'zhangwei', avatar: '👨‍💻', date: '2周前', additions: 8, deletions: 2, files: ['guidelines/code-review.md'] },
+  { hash: 'c2b5d90', message: '初始化知识库结构，添加 README 和目录规范', author: 'zhangwei', avatar: '👨‍💻', date: '1个月前', additions: 210, deletions: 0, files: ['README.md', 'guidelines/naming-convention.md'] },
+];
+
 const MOCK_REPOS: KnowledgeRepo[] = [
   {
     id: 1, name: '交易核心架构知识库', typeKey: '架构知识',
     desc: '交易域核心架构规范、稳定性设计、安全合规要求',
     owner: 'zhangwei', ownerAvatar: '👨‍💻', memberCount: 12, updatedAt: '2分钟前',
-    docCount: 47, prCount: 3, isMine: true,
+    docCount: 47, prCount: 3, isMine: true, commits: MOCK_COMMITS_REPO1,
     members: [
       { name: 'zhangwei', avatar: '👨‍💻', role: 'Owner' },
       { name: 'liuyang', avatar: '👩‍💻', role: 'Maintainer' },
@@ -177,6 +208,11 @@ const MOCK_REPOS: KnowledgeRepo[] = [
     desc: '用户中心核心系统文档、API 规范、代码模板',
     owner: 'liuyang', ownerAvatar: '👩‍💻', memberCount: 8, updatedAt: '1小时前',
     docCount: 32, prCount: 1, isMine: true,
+    commits: [
+      { hash: 'd4e7f23', message: '新增用户画像 API 接口文档草稿', author: 'sunming', avatar: '👨‍🎨', date: '5小时前', additions: 95, deletions: 0, files: ['api/user-profile.md'] },
+      { hash: 'a8c1b56', message: '更新用户认证 API：补充 Token 刷新机制说明', author: 'liuyang', avatar: '👩‍💻', date: '3天前', additions: 32, deletions: 8, files: ['api/user-auth.md'] },
+      { hash: '7f2d390', message: '初始化用户中心系统知识库', author: 'liuyang', avatar: '👩‍💻', date: '2周前', additions: 180, deletions: 0, files: ['README.md', 'api/user-auth.md'] },
+    ],
     members: [
       { name: 'liuyang', avatar: '👩‍💻', role: 'Owner' },
       { name: 'sunming', avatar: '👨‍🎨', role: 'Maintainer' },
@@ -200,6 +236,10 @@ const MOCK_REPOS: KnowledgeRepo[] = [
     desc: '前端技术栈规范、组件库使用指南、性能优化实践',
     owner: 'wangfang', ownerAvatar: '👩‍🔬', memberCount: 15, updatedAt: '3小时前',
     docCount: 58, prCount: 5, isMine: false,
+    commits: [
+      { hash: 'e1f4a89', message: '新增 React 18 并发特性最佳实践文档', author: 'wangfang', avatar: '👩‍🔬', date: '1天前', additions: 156, deletions: 8, files: ['components/react18.md'] },
+      { hash: 'b3c6d12', message: '更新 Tailwind CSS 配置规范', author: 'zhaolei', avatar: '👨‍🔬', date: '2天前', additions: 42, deletions: 31, files: ['components/design-tokens.md'] },
+    ],
     members: [
       { name: 'wangfang', avatar: '👩‍🔬', role: 'Owner' },
       { name: 'zhangwei', avatar: '👨‍💻', role: 'Viewer' },
@@ -226,6 +266,9 @@ const MOCK_REPOS: KnowledgeRepo[] = [
       { name: 'chenxiao', avatar: '🧑‍💻', role: 'Owner' },
     ],
     prs: [],
+    commits: [
+      { hash: 'c9d3e67', message: '补充混沌工程实验规范', author: 'chenxiao', avatar: '🧑‍💻', date: '昨天', additions: 64, deletions: 5, files: ['chaos/experiment-spec.md'] },
+    ],
     tree: [
       { name: 'README.md', type: 'file', content: `# 质量工程通识库\n\n覆盖单测、集成测试、性能测试、混沌工程全链路质量规范。` },
     ],
@@ -240,6 +283,9 @@ const MOCK_REPOS: KnowledgeRepo[] = [
       { name: 'zhangwei', avatar: '👨‍💻', role: 'Contributor' },
     ],
     prs: [],
+    commits: [
+      { hash: 'f0a2b34', message: '更新支付领域模型：新增退款状态机说明', author: 'zhaolei', avatar: '👨‍🔬', date: '2天前', additions: 48, deletions: 12, files: ['domain/refund-state.md'] },
+    ],
     tree: [
       { name: 'README.md', type: 'file', content: `# 支付业务知识库\n\n记录支付核心业务领域模型、规则和产品文档。` },
     ],
@@ -257,6 +303,10 @@ const MOCK_REPOS: KnowledgeRepo[] = [
     prs: [
       { id: 601, title: '补充 Q1 里程碑节点和 Owner 信息', author: 'liuyang', avatar: '👩‍💻', status: 'open', updatedAt: '3天前', branch: 'feat/q1-milestone', additions: 45, deletions: 3 },
     ],
+    commits: [
+      { hash: '2e5f891', message: '补充 Q1 里程碑节点和 Owner 信息', author: 'liuyang', avatar: '👩‍💻', date: '3天前', additions: 45, deletions: 3, files: ['milestones/q1.md'] },
+      { hash: '8b3c456', message: '初始化风控升级项目知识库', author: 'sunming', avatar: '👨‍🎨', date: '1周前', additions: 120, deletions: 0, files: ['README.md', 'team.md'] },
+    ],
     tree: [
       { name: 'README.md', type: 'file', content: `# 风控升级项目知识库\n\n2026 年风控能力升级项目，目标：实时风控延迟 < 50ms，覆盖率提升至 99.5%。` },
     ],
@@ -272,6 +322,9 @@ const MOCK_REPOS: KnowledgeRepo[] = [
     prs: [],
     tree: [
       { name: 'README.md', type: 'file', content: `# 后端中间件通识库\n\n涵盖 Spring Boot、RPC、消息队列、分布式缓存等中间件接入规范。` },
+    ],
+    commits: [
+      { hash: 'a1b2c3d', message: '初始化后端中间件通识库', author: 'houjie', avatar: '🧑‍🔧', date: '5天前', additions: 320, deletions: 0, files: ['README.md', 'middleware/rpc.md', 'middleware/mq.md'] },
     ],
   },
 ];
@@ -499,8 +552,326 @@ const MarkdownView: React.FC<{ content: string }> = ({ content }) => {
   return <div style={{ padding: '4px 0' }}>{elements}</div>;
 };
 
+// ─── Chat Tab ─────────────────────────────────────────────────────
+const MOCK_CHAT_INIT: ChatMessage[] = [
+  {
+    id: 1, role: 'assistant',
+    content: '你好！我已加载「交易核心架构知识库」的所有文档，可以帮你检索内容、解答疑问，或根据你的需求生成修改建议并提交 PR。',
+    timestamp: '09:00',
+  },
+];
+
+const MOCK_AI_RESPONSES: Record<string, ChatMessage> = {
+  '限流': {
+    id: 0, role: 'assistant',
+    content: '在本知识库中找到关于**限流熔断**的相关内容，来自 `architecture/stability/circuit-breaker.md`：\n\nSentinel 熔断策略共三种：慢调用比例（RT > 200ms 且比例 > 50%，熔断 10s）、异常比例（> 20%，熔断 10s）、异常数（1分钟内 > 10，熔断 10s）。核心接口必须提供降级兜底逻辑。',
+    citations: [{ file: 'architecture/stability/circuit-breaker.md', snippet: '慢调用比例：RT > 200ms 且比例 > 50%，熔断 10s' }],
+    suggestUpdate: true,
+    timestamp: '',
+  },
+  '分布式事务': {
+    id: 0, role: 'assistant',
+    content: '找到**分布式事务**相关内容，来自 `architecture/transaction/distributed-tx.md`：\n\n推荐两种方案：**TCC 模式**（强一致，适用资金类操作）和 **Saga 模式**（最终一致，适用业务流程类）。禁止在分布式事务中嵌套远程调用，Try 阶段不得做不可逆操作，超时不得超过 3000ms。',
+    citations: [{ file: 'architecture/transaction/distributed-tx.md', snippet: 'TCC 模式（强一致）适用于资金类操作' }],
+    suggestUpdate: true,
+    timestamp: '',
+  },
+};
+
+const simulateAIResponse = (input: string, repo: KnowledgeRepo): ChatMessage => {
+  const now = new Date().toLocaleTimeString('zh', { hour: '2-digit', minute: '2-digit' });
+  for (const [key, resp] of Object.entries(MOCK_AI_RESPONSES)) {
+    if (input.includes(key)) return { ...resp, id: Date.now(), timestamp: now };
+  }
+  if (input.includes('修改') || input.includes('更新') || input.includes('补充')) {
+    return {
+      id: Date.now(), role: 'assistant',
+      content: '好的，我已根据你的要求生成修改方案。以下是 diff 预览，确认后我将自动创建 PR：',
+      diffPreview: {
+        file: 'architecture/stability/circuit-breaker.md',
+        before: '- **慢调用比例**：RT > 200ms 且比例 > 50%，熔断 10s',
+        after: '- **慢调用比例**：RT > 200ms 且比例 > 50%，熔断 10s\n- **最小请求数**：统计窗口内请求数需 ≥ 5 才触发熔断判断（避免小流量误熔断）',
+      },
+      timestamp: now,
+    };
+  }
+  return {
+    id: Date.now(), role: 'assistant',
+    content: `我在「${repo.name}」中检索了相关内容，暂未找到与「${input}」直接匹配的文档段落。你可以尝试换个关键词，或者告诉我你想了解的具体问题，我来帮你定位。`,
+    timestamp: now,
+  };
+};
+
+const ChatTab: React.FC<{ repo: KnowledgeRepo; onPRCreated: (pr: PRItem) => void }> = ({ repo, onPRCreated }) => {
+  const [messages, setMessages] = useState<ChatMessage[]>(MOCK_CHAT_INIT);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [pendingDiff, setPendingDiff] = useState<ChatMessage | null>(null);
+  const [citedFile, setCitedFile] = useState<string | null>(null);
+  const bottomRef = React.useRef<HTMLDivElement>(null);
+
+  const scrollBottom = () => setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+
+  const send = () => {
+    if (!input.trim() || loading) return;
+    const userMsg: ChatMessage = { id: Date.now(), role: 'user', content: input, timestamp: new Date().toLocaleTimeString('zh', { hour: '2-digit', minute: '2-digit' }) };
+    setMessages(m => [...m, userMsg]);
+    setInput('');
+    setLoading(true);
+    scrollBottom();
+    setTimeout(() => {
+      const resp = simulateAIResponse(input, repo);
+      setMessages(m => [...m, resp]);
+      if (resp.diffPreview) setPendingDiff(resp);
+      if (resp.citations?.[0]) setCitedFile(resp.citations[0].file);
+      setLoading(false);
+      scrollBottom();
+    }, 1200);
+  };
+
+  const confirmPR = () => {
+    if (!pendingDiff?.diffPreview) return;
+    const newPR: PRItem = {
+      id: Date.now(), title: `AI 建议：补充 ${pendingDiff.diffPreview.file} 中的限流最小请求数说明`,
+      author: 'me', avatar: '🧑‍💻', status: 'open',
+      updatedAt: '刚刚', branch: 'ai/circuit-breaker-min-requests',
+      additions: 2, deletions: 0,
+    };
+    onPRCreated(newPR);
+    const confirmMsg: ChatMessage = {
+      id: Date.now(), role: 'assistant',
+      content: '✅ PR 已创建成功！',
+      prCreated: { id: newPR.id, title: newPR.title, branch: newPR.branch },
+      timestamp: new Date().toLocaleTimeString('zh', { hour: '2-digit', minute: '2-digit' }),
+    };
+    setMessages(m => [...m, confirmMsg]);
+    setPendingDiff(null);
+    scrollBottom();
+  };
+
+  const SUGGESTIONS = ['限流熔断规范是什么？', '分布式事务有哪些方案？', '帮我补充最小请求数说明'];
+
+  return (
+    <div style={{ display: 'flex', gap: 0, height: 560, animation: 'fadeUp 0.3s ease' }}>
+      {/* ── Left: Chat ── */}
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', borderRight: `1px solid ${C.border}`, paddingRight: 20 }}>
+        {/* Messages */}
+        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 12 }}>
+          {messages.map((msg) => (
+            <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start', gap: 4 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, flexDirection: msg.role === 'user' ? 'row-reverse' : 'row' }}>
+                {msg.role === 'assistant' && (
+                  <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, flexShrink: 0 }}>🤖</div>
+                )}
+                <div style={{
+                  maxWidth: '78%', padding: '10px 14px', borderRadius: msg.role === 'user' ? '12px 12px 4px 12px' : '12px 12px 12px 4px',
+                  background: msg.role === 'user' ? C.blue : C.card,
+                  border: msg.role === 'user' ? 'none' : `1px solid ${C.border}`,
+                  fontSize: 13, color: C.text, lineHeight: 1.65,
+                }}>
+                  {msg.content.split('\n').map((line, i) => {
+                    const html = line.replace(/\*\*([^*]+)\*\*/g, `<strong style="color:${C.blueLight}">$1</strong>`).replace(/`([^`]+)`/g, `<code style="background:#0d1117;color:${C.green};padding:1px 5px;border-radius:4px;font-family:monospace;font-size:11px">$1</code>`);
+                    return <p key={i} style={{ margin: i === 0 ? 0 : '4px 0 0' }} dangerouslySetInnerHTML={{ __html: html }} />;
+                  })}
+
+                  {/* Citations */}
+                  {msg.citations?.map((c, i) => (
+                    <div key={i} onClick={() => setCitedFile(c.file)} style={{ marginTop: 8, padding: '6px 10px', background: 'rgba(59,130,246,0.08)', borderLeft: `2px solid ${C.blue}`, borderRadius: 4, cursor: 'pointer' }}>
+                      <div style={{ fontSize: 11, color: C.blue, fontFamily: 'monospace', marginBottom: 2 }}>📄 {c.file}</div>
+                      <div style={{ fontSize: 11, color: C.muted }}>{c.snippet}</div>
+                    </div>
+                  ))}
+
+                  {/* Suggest update */}
+                  {msg.suggestUpdate && !pendingDiff && (
+                    <div style={{ marginTop: 10, padding: '8px 10px', background: 'rgba(245,158,11,0.08)', border: `1px solid rgba(245,158,11,0.2)`, borderRadius: 6 }}>
+                      <div style={{ fontSize: 12, color: C.orange, marginBottom: 6 }}>💡 检测到内容可能需要更新，是否生成修改建议？</div>
+                      <button className="kn-btn" onClick={() => { setInput('帮我补充最小请求数说明'); send(); }}
+                        style={{ background: C.orange, color: '#fff', border: 'none', borderRadius: 5, padding: '4px 12px', cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>
+                        生成修改建议
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Diff preview */}
+                  {msg.diffPreview && (
+                    <div style={{ marginTop: 10 }}>
+                      <div style={{ fontSize: 11, color: C.muted, marginBottom: 6, fontFamily: 'monospace' }}>📄 {msg.diffPreview.file}</div>
+                      <div style={{ background: '#0d1117', borderRadius: 6, padding: '10px 12px', fontFamily: 'monospace', fontSize: 12, lineHeight: 1.7 }}>
+                        <div style={{ color: C.red }}>- {msg.diffPreview.before}</div>
+                        {msg.diffPreview.after.split('\n').map((l, i) => <div key={i} style={{ color: C.green }}>+ {l}</div>)}
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                        <button className="kn-btn" onClick={confirmPR}
+                          style={{ background: C.green, color: '#fff', border: 'none', borderRadius: 5, padding: '5px 14px', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+                          ✓ 确认，创建 PR
+                        </button>
+                        <button className="kn-btn" onClick={() => setPendingDiff(null)}
+                          style={{ background: 'transparent', color: C.muted, border: `1px solid ${C.border}`, borderRadius: 5, padding: '5px 14px', cursor: 'pointer', fontSize: 12 }}>
+                          取消
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* PR created */}
+                  {msg.prCreated && (
+                    <div style={{ marginTop: 8, padding: '8px 10px', background: 'rgba(16,185,129,0.08)', border: `1px solid rgba(16,185,129,0.2)`, borderRadius: 6 }}>
+                      <div style={{ fontSize: 12, color: C.green, fontWeight: 600 }}>🔀 PR 已创建</div>
+                      <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{msg.prCreated.title}</div>
+                      <div style={{ fontSize: 11, color: C.purple, fontFamily: 'monospace', marginTop: 2 }}>#{msg.prCreated.branch}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <span style={{ fontSize: 10, color: C.border, paddingLeft: msg.role === 'user' ? 0 : 36, paddingRight: msg.role === 'user' ? 4 : 0 }}>{msg.timestamp}</span>
+            </div>
+          ))}
+          {loading && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>🤖</div>
+              <div style={{ padding: '10px 14px', background: C.card, border: `1px solid ${C.border}`, borderRadius: '12px 12px 12px 4px', fontSize: 13, color: C.muted }}>
+                正在检索知识库<span style={{ animation: 'fadeIn 1s infinite' }}>...</span>
+              </div>
+            </div>
+          )}
+          <div ref={bottomRef} />
+        </div>
+
+        {/* Suggestions */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+          {SUGGESTIONS.map(s => (
+            <button key={s} className="filter-chip" onClick={() => setInput(s)}
+              style={{ background: 'transparent', border: `1px solid ${C.border}`, borderRadius: 16, padding: '4px 10px', color: C.muted, cursor: 'pointer', fontSize: 11 }}>
+              {s}
+            </button>
+          ))}
+        </div>
+
+        {/* Input */}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input
+            className="kn-input"
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()}
+            placeholder="问一个问题，或说「帮我修改 xxx」…"
+            style={{
+              flex: 1, background: C.input, border: `1px solid ${C.border}`,
+              borderRadius: 8, color: C.text, fontSize: 13, padding: '9px 14px', fontFamily: 'inherit',
+            }}
+          />
+          <button className="kn-btn" onClick={send} disabled={loading || !input.trim()}
+            style={{
+              background: input.trim() ? C.blue : C.border, color: '#fff', border: 'none',
+              borderRadius: 8, padding: '0 18px', cursor: input.trim() ? 'pointer' : 'default', fontSize: 14, fontWeight: 700,
+            }}>
+            ↑
+          </button>
+        </div>
+      </div>
+
+      {/* ── Right: Referenced doc ── */}
+      <div style={{ width: 280, flexShrink: 0, paddingLeft: 20, overflowY: 'auto' }}>
+        <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 10 }}>
+          引用文档
+        </div>
+        {citedFile ? (
+          <div>
+            <div style={{ fontSize: 12, color: C.blue, fontFamily: 'monospace', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span>📄</span>{citedFile}
+            </div>
+            <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.7, background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, padding: '12px' }}>
+              {/* highlight snippet */}
+              <div style={{ background: 'rgba(245,158,11,0.12)', border: `1px solid rgba(245,158,11,0.25)`, borderRadius: 4, padding: '6px 8px', marginBottom: 8, fontSize: 11, color: C.orange }}>
+                ⚡ 命中段落
+              </div>
+              <div style={{ fontSize: 12, color: C.text, lineHeight: 1.8 }}>
+                {citedFile.includes('circuit-breaker') ? '慢调用比例：RT > 200ms 且比例 > 50%，熔断 10s\n异常比例：异常比例 > 20%，熔断 10s\n异常数：1分钟内异常数 > 10，熔断 10s' : '核心接口必须提供降级兜底逻辑，不能直接返回错误。'}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '40px 0', color: C.border, fontSize: 12 }}>
+            <div style={{ fontSize: 28, marginBottom: 8 }}>📎</div>
+            提问后这里会显示<br />引用的文档段落
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ─── Commits Tab ──────────────────────────────────────────────────
+const CommitsTab: React.FC<{ repo: KnowledgeRepo }> = ({ repo }) => {
+  const [expandedHash, setExpandedHash] = useState<string | null>(null);
+  return (
+    <div style={{ animation: 'fadeUp 0.3s ease' }}>
+      {/* Timeline */}
+      <div style={{ position: 'relative' }}>
+        <div style={{ position: 'absolute', left: 15, top: 0, bottom: 0, width: 1, background: C.border }} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+          {repo.commits.map((commit, idx) => (
+            <div key={commit.hash} style={{ position: 'relative', paddingLeft: 40, paddingBottom: 20 }}>
+              {/* dot */}
+              <div style={{
+                position: 'absolute', left: 9, top: 14,
+                width: 13, height: 13, borderRadius: '50%',
+                background: idx === 0 ? C.blue : C.card,
+                border: `2px solid ${idx === 0 ? C.blue : C.border}`,
+                zIndex: 1,
+              }} />
+              {/* card */}
+              <div
+                className="kn-pr-row"
+                onClick={() => setExpandedHash(expandedHash === commit.hash ? null : commit.hash)}
+                style={{
+                  background: C.card, border: `1px solid ${expandedHash === commit.hash ? C.blue : C.border}`,
+                  borderRadius: expandedHash === commit.hash ? '8px 8px 0 0' : 8,
+                  padding: '12px 14px', cursor: 'pointer',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: C.text, marginBottom: 3 }}>{commit.message}</div>
+                    <div style={{ fontSize: 11, color: C.muted, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+                      <span>{commit.avatar} {commit.author}</span>
+                      <span style={{ fontFamily: 'monospace', color: C.purple, background: 'rgba(139,92,246,0.1)', padding: '1px 6px', borderRadius: 4 }}>{commit.hash}</span>
+                      <span>{commit.date}</span>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, fontSize: 12, flexShrink: 0, alignItems: 'center' }}>
+                    <span style={{ color: C.green, fontWeight: 600 }}>+{commit.additions}</span>
+                    <span style={{ color: C.red, fontWeight: 600 }}>-{commit.deletions}</span>
+                    <span style={{ color: C.muted, fontSize: 11 }}>{expandedHash === commit.hash ? '▲' : '▼'}</span>
+                  </div>
+                </div>
+              </div>
+              {expandedHash === commit.hash && (
+                <div style={{
+                  background: '#0d1117', border: `1px solid ${C.blue}`,
+                  borderTop: 'none', borderRadius: '0 0 8px 8px',
+                  padding: '12px 14px', animation: 'fadeIn 0.2s ease',
+                }}>
+                  <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>变更文件</div>
+                  {commit.files.map((f, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 0', fontSize: 12, color: C.text, fontFamily: 'monospace' }}>
+                      <span style={{ color: C.green }}>M</span>
+                      <span>{f}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── Detail Page ──────────────────────────────────────────────────
-type DetailTab = 'docs' | 'prs' | 'members';
+type DetailTab = 'docs' | 'prs' | 'members' | 'chat' | 'commits';
 
 const RepoDetail: React.FC<{ repo: KnowledgeRepo; onBack: () => void }> = ({ repo, onBack }) => {
   const [activeTab, setActiveTab] = useState<DetailTab>('docs');
@@ -509,6 +880,7 @@ const RepoDetail: React.FC<{ repo: KnowledgeRepo; onBack: () => void }> = ({ rep
     repo.tree.find(n => n.name === 'README.md')?.content ?? ''
   );
   const [expandedPR, setExpandedPR] = useState<number | null>(null);
+  const [prs, setPrs] = useState<PRItem[]>(repo.prs);
   const typeConfig = getTypeConfig(repo.typeKey);
 
   const handleFileSelect = (name: string, content: string) => {
@@ -516,10 +888,17 @@ const RepoDetail: React.FC<{ repo: KnowledgeRepo; onBack: () => void }> = ({ rep
     setSelectedContent(content);
   };
 
+  const handlePRCreated = (pr: PRItem) => {
+    setPrs(prev => [pr, ...prev]);
+    setTimeout(() => setActiveTab('prs'), 800);
+  };
+
   const tabs: { key: DetailTab; label: string; count?: number }[] = [
-    { key: 'docs', label: '📄 文档' },
-    { key: 'prs', label: `🔀 PR`, count: repo.prs.filter(p => p.status === 'open').length },
+    { key: 'docs',    label: '📄 文档' },
+    { key: 'prs',     label: '🔀 PR',   count: prs.filter(p => p.status === 'open').length },
     { key: 'members', label: '👥 成员', count: repo.members.length },
+    { key: 'chat',    label: '💬 对话' },
+    { key: 'commits', label: '📋 Commits', count: repo.commits.length },
   ];
 
   return (
@@ -666,14 +1045,14 @@ const RepoDetail: React.FC<{ repo: KnowledgeRepo; onBack: () => void }> = ({ rep
       {/* ── PR Tab ── */}
       {activeTab === 'prs' && (
         <div style={{ animation: 'fadeUp 0.3s ease' }}>
-          {repo.prs.length === 0 ? (
+          {prs.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 0', color: C.muted, fontSize: 13 }}>
               <div style={{ fontSize: 32, marginBottom: 8 }}>🎉</div>
               暂无 PR，知识库已是最新状态
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {repo.prs.map((pr) => (
+              {prs.map((pr) => (
                 <div key={pr.id}>
                   <div
                     className="kn-pr-row"
@@ -780,13 +1159,300 @@ const RepoDetail: React.FC<{ repo: KnowledgeRepo; onBack: () => void }> = ({ rep
           </div>
         </div>
       )}
+
+      {/* ── Chat Tab ── */}
+      {activeTab === 'chat' && (
+        <ChatTab repo={repo} onPRCreated={handlePRCreated} />
+      )}
+
+      {/* ── Commits Tab ── */}
+      {activeTab === 'commits' && (
+        <CommitsTab repo={repo} />
+      )}
+    </div>
+  );
+};
+
+// ─── Global Chat Types ────────────────────────────────────────────
+interface GlobalChatMsg {
+  id: number;
+  role: 'user' | 'assistant';
+  content: string;
+  sources?: { repo: string; file: string; snippet: string; typeKey: string }[];
+  timestamp: string;
+}
+
+const GLOBAL_QA: { keys: string[]; answer: string; sources: GlobalChatMsg['sources'] }[] = [
+  {
+    keys: ['限流', '熔断'],
+    answer: '在 **2 个知识库**中找到了限流熔断相关内容：\n\n**交易核心架构知识库**中的 Sentinel 配置规范：慢调用比例（RT > 200ms 且比例 > 50%，熔断 10s）、异常比例（> 20%，熔断 10s）、异常数（1分钟内 > 10，熔断 10s）。核心接口必须提供降级兜底逻辑。\n\n**后端中间件通识库**中也有 Resilience4j 的相关配置说明，适用于非 Sentinel 接入的场景。',
+    sources: [
+      { repo: '交易核心架构知识库', file: 'architecture/stability/circuit-breaker.md', snippet: '慢调用比例：RT > 200ms 且比例 > 50%，熔断 10s', typeKey: '架构知识' },
+      { repo: '后端中间件通识库', file: 'middleware/resilience4j.md', snippet: 'Resilience4j 适用于非 Sentinel 接入场景', typeKey: '后端通识' },
+    ],
+  },
+  {
+    keys: ['认证', '登录', 'Token'],
+    answer: '在 **用户中心系统知识库** 中找到完整的认证规范：\n\n- 密码必须客户端 AES-256 加密后传输\n- Token 有效期 2 小时，刷新 Token 7 天\n- 连续登录失败 5 次，锁定账号 30 分钟\n- 接口路径：`POST /api/v2/auth/login`',
+    sources: [
+      { repo: '用户中心系统知识库', file: 'api/user-auth.md', snippet: 'Token 有效期 2 小时，连续失败 5 次锁定账号 30 分钟', typeKey: '系统知识' },
+    ],
+  },
+  {
+    keys: ['分布式事务', '事务'],
+    answer: '在 **交易核心架构知识库** 中找到分布式事务规范，推荐两种方案：\n\n**TCC 模式**（强一致）适用于资金类操作，需实现 Try / Confirm / Cancel 三个阶段，超时不超过 3000ms。\n\n**Saga 模式**（最终一致）适用于业务流程类，每个本地事务必须有对应补偿操作。\n\n禁止在分布式事务中嵌套远程调用，Try 阶段不得做不可逆操作。',
+    sources: [
+      { repo: '交易核心架构知识库', file: 'architecture/transaction/distributed-tx.md', snippet: 'TCC 模式（强一致）适用于资金类操作', typeKey: '架构知识' },
+      { repo: '交易核心架构知识库', file: 'architecture/transaction/saga-pattern.md', snippet: '每个本地事务必须有对应的补偿操作', typeKey: '架构知识' },
+    ],
+  },
+  {
+    keys: ['测试', '单测', '覆盖率'],
+    answer: '在 **质量工程通识库** 中找到测试规范：\n\n- 单测覆盖率要求 > 80%\n- 核心链路必须有集成测试\n- 混沌工程实验需提前申请变更窗口\n- 禁止在测试环境直接访问生产数据库',
+    sources: [
+      { repo: '质量工程通识库', file: 'testing/unit-test-spec.md', snippet: '单测覆盖率 > 80%，核心链路必须有集成测试', typeKey: '质量通识' },
+    ],
+  },
+  {
+    keys: ['命名', '规范', 'Code Review'],
+    answer: '在 **交易核心架构知识库** 的开发规范中找到相关内容：\n\nCode Review 必查项：禁止循环内 DB/RPC 调用、所有写接口必须幂等、禁止捕获 Exception 后只打日志、禁止硬编码配置项。\n\n命名规范：包名全小写按业务域分层，Service 实现类用 `XxxServiceImpl`，查询方法用 `getXxx / listXxx`。',
+    sources: [
+      { repo: '交易核心架构知识库', file: 'guidelines/code-review.md', snippet: '禁止循环内 DB/RPC 调用，所有写接口必须幂等', typeKey: '架构知识' },
+      { repo: '交易核心架构知识库', file: 'guidelines/naming-convention.md', snippet: 'Service 实现类：XxxServiceImpl', typeKey: '架构知识' },
+    ],
+  },
+];
+
+const resolveGlobalAnswer = (input: string): { answer: string; sources: GlobalChatMsg['sources'] } => {
+  for (const item of GLOBAL_QA) {
+    if (item.keys.some(k => input.includes(k))) {
+      return { answer: item.answer, sources: item.sources };
+    }
+  }
+  return {
+    answer: `我在全部 **${MOCK_REPOS.length} 个知识库**（共 ${MOCK_REPOS.reduce((s, r) => s + r.docCount, 0)} 篇文档）中检索了「${input}」，暂未找到直接匹配的内容。\n\n你可以尝试换个关键词，或者进入具体知识库的「对话」Tab 精确提问。`,
+    sources: [],
+  };
+};
+
+// ─── Global Search Bar（对话式）──────────────────────────────────
+const GlobalSearchBar: React.FC<{ onEnterRepo: (repo: KnowledgeRepo) => void }> = ({ onEnterRepo }) => {
+  const [expanded, setExpanded] = useState(false);
+  const [messages, setMessages] = useState<GlobalChatMsg[]>([
+    {
+      id: 1, role: 'assistant',
+      content: '你好！我可以帮你跨所有知识库检索内容。试试问我：「限流熔断规范是什么？」或「分布式事务有哪些方案？」',
+      timestamp: '',
+    },
+  ]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const bottomRef = React.useRef<HTMLDivElement>(null);
+
+  const scrollBottom = () => setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+
+  const send = () => {
+    if (!input.trim() || loading) return;
+    const now = new Date().toLocaleTimeString('zh', { hour: '2-digit', minute: '2-digit' });
+    const userMsg: GlobalChatMsg = { id: Date.now(), role: 'user', content: input, timestamp: now };
+    setMessages(m => [...m, userMsg]);
+    setInput('');
+    setLoading(true);
+    if (!expanded) setExpanded(true);
+    scrollBottom();
+    setTimeout(() => {
+      const { answer, sources } = resolveGlobalAnswer(input);
+      const aiMsg: GlobalChatMsg = {
+        id: Date.now() + 1, role: 'assistant', content: answer,
+        sources: sources && sources.length > 0 ? sources : undefined,
+        timestamp: new Date().toLocaleTimeString('zh', { hour: '2-digit', minute: '2-digit' }),
+      };
+      setMessages(m => [...m, aiMsg]);
+      setLoading(false);
+      scrollBottom();
+    }, 1100);
+  };
+
+  const SUGGESTIONS = ['限流熔断规范？', '分布式事务方案？', '认证 Token 有效期？', 'Code Review 必查项？'];
+
+  const renderContent = (text: string) =>
+    text
+      .replace(/\*\*([^*]+)\*\*/g, `<strong style="color:${C.purpleLight}">$1</strong>`)
+      .replace(/`([^`]+)`/g, `<code style="background:#0d1117;color:${C.green};padding:1px 5px;border-radius:4px;font-family:monospace;font-size:11px">$1</code>`);
+
+  return (
+    <div style={{
+      marginBottom: 28,
+      background: C.card, border: `1px solid ${C.border}`,
+      borderRadius: C.radius, overflow: 'hidden',
+      transition: 'box-shadow 0.2s',
+    }}>
+      {/* ── Header ── */}
+      <div
+        style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', borderBottom: expanded ? `1px solid ${C.border}` : 'none' }}
+        onClick={() => setExpanded(e => !e)}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 16 }}>🔮</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>跨库智能问答</span>
+          <span style={{ fontSize: 12, color: C.muted }}>— 搜遍全部 {MOCK_REPOS.length} 个知识库</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {messages.length > 1 && (
+            <span style={{ fontSize: 11, color: C.purple, background: 'rgba(139,92,246,0.1)', borderRadius: 10, padding: '2px 8px' }}>
+              {messages.filter(m => m.role === 'user').length} 条对话
+            </span>
+          )}
+          <span style={{ color: C.muted, fontSize: 12, transition: 'transform 0.2s', transform: expanded ? 'rotate(180deg)' : 'none' }}>▼</span>
+        </div>
+      </div>
+
+      {/* ── Chat Body ── */}
+      {expanded && (
+        <div style={{ animation: 'fadeUp 0.2s ease' }}>
+          {/* Messages */}
+          <div style={{ maxHeight: 340, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {messages.map((msg) => (
+              <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start', gap: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, flexDirection: msg.role === 'user' ? 'row-reverse' : 'row', maxWidth: '90%' }}>
+                  {msg.role === 'assistant' && (
+                    <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, flexShrink: 0, marginTop: 2 }}>🔮</div>
+                  )}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxWidth: '100%' }}>
+                    <div style={{
+                      padding: '10px 14px',
+                      borderRadius: msg.role === 'user' ? '12px 12px 4px 12px' : '12px 12px 12px 4px',
+                      background: msg.role === 'user' ? C.purple : '#0f1929',
+                      border: msg.role === 'user' ? 'none' : `1px solid ${C.border}`,
+                      fontSize: 13, color: C.text, lineHeight: 1.7,
+                    }}>
+                      {msg.content.split('\n').map((line, i) => (
+                        <p key={i} style={{ margin: i === 0 ? 0 : '4px 0 0' }}
+                          dangerouslySetInnerHTML={{ __html: renderContent(line) }} />
+                      ))}
+                    </div>
+
+                    {/* Source cards */}
+                    {msg.sources && msg.sources.length > 0 && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                        <div style={{ fontSize: 11, color: C.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                          📎 来源 ({msg.sources.length})
+                        </div>
+                        {msg.sources.map((src, i) => {
+                          const cfg = getTypeConfig(src.typeKey);
+                          const repo = MOCK_REPOS.find(r => r.name === src.repo);
+                          return (
+                            <div
+                              key={i}
+                              className="kn-pr-row"
+                              onClick={() => repo && onEnterRepo(repo)}
+                              style={{
+                                background: C.card, border: `1px solid ${C.border}`,
+                                borderLeft: `3px solid ${cfg.color}`,
+                                borderRadius: 8, padding: '10px 12px',
+                                cursor: repo ? 'pointer' : 'default',
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                                <span style={{ fontSize: 13 }}>{cfg.icon}</span>
+                                <span style={{ fontSize: 12, fontWeight: 700, color: C.text }}>{src.repo}</span>
+                                <span style={{ marginLeft: 'auto', fontSize: 10, color: cfg.color, background: `${cfg.color}15`, borderRadius: 4, padding: '1px 6px', fontWeight: 600 }}>{cfg.label}</span>
+                              </div>
+                              <div style={{ fontSize: 11, color: C.blue, fontFamily: 'monospace', marginBottom: 4 }}>📄 {src.file}</div>
+                              <div style={{ fontSize: 11, color: C.muted, lineHeight: 1.5 }}>{src.snippet}</div>
+                              {repo && (
+                                <div style={{ marginTop: 6, fontSize: 11, color: C.purple }}>→ 进入知识库查看完整文档</div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {msg.timestamp && (
+                  <span style={{ fontSize: 10, color: C.border, paddingLeft: msg.role === 'user' ? 0 : 34 }}>{msg.timestamp}</span>
+                )}
+              </div>
+            ))}
+            {loading && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>🔮</div>
+                <div style={{ padding: '10px 14px', background: '#0f1929', border: `1px solid ${C.border}`, borderRadius: '12px 12px 12px 4px', fontSize: 13, color: C.muted }}>
+                  正在检索全部知识库<span style={{ animation: 'fadeIn 1s infinite' }}>...</span>
+                </div>
+              </div>
+            )}
+            <div ref={bottomRef} />
+          </div>
+
+          {/* Suggestions */}
+          <div style={{ padding: '0 20px 10px', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {SUGGESTIONS.map(s => (
+              <button key={s} className="filter-chip" onClick={() => setInput(s)}
+                style={{ background: 'transparent', border: `1px solid ${C.border}`, borderRadius: 16, padding: '4px 10px', color: C.muted, cursor: 'pointer', fontSize: 11 }}>
+                {s}
+              </button>
+            ))}
+          </div>
+
+          {/* Input */}
+          <div style={{ padding: '10px 20px 16px', display: 'flex', gap: 8 }}>
+            <input
+              className="kn-input"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()}
+              placeholder="跨库提问，例如：所有架构知识库里关于限流的规范？"
+              style={{
+                flex: 1, background: C.input, border: `1px solid ${C.border}`,
+                borderRadius: 8, color: C.text, fontSize: 13,
+                padding: '9px 14px', fontFamily: 'inherit',
+              }}
+            />
+            <button className="kn-btn" onClick={send} disabled={loading || !input.trim()}
+              style={{
+                background: input.trim() ? C.purple : C.border, color: '#fff', border: 'none',
+                borderRadius: 8, padding: '0 18px', cursor: input.trim() ? 'pointer' : 'default', fontSize: 14, fontWeight: 700,
+              }}>
+              ↑
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Collapsed: quick input ── */}
+      {!expanded && (
+        <div style={{ padding: '12px 20px 14px', display: 'flex', gap: 8 }} onClick={e => e.stopPropagation()}>
+          <input
+            className="kn-input"
+            value={input}
+            onChange={e => { setInput(e.target.value); if (!expanded) setExpanded(true); }}
+            onFocus={() => setExpanded(true)}
+            onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send()}
+            placeholder="跨库提问，例如：所有架构知识库里关于限流的规范？"
+            style={{
+              flex: 1, background: C.input, border: `1px solid ${C.border}`,
+              borderRadius: 8, color: C.text, fontSize: 13,
+              padding: '9px 14px', fontFamily: 'inherit',
+            }}
+          />
+          <button className="kn-btn" onClick={send} disabled={loading || !input.trim()}
+            style={{
+              background: input.trim() ? C.purple : C.border, color: '#fff', border: 'none',
+              borderRadius: 8, padding: '0 18px', cursor: input.trim() ? 'pointer' : 'default', fontSize: 14, fontWeight: 700,
+            }}>
+            ↑
+          </button>
+        </div>
+      )}
     </div>
   );
 };
 
 // ─── List Page ────────────────────────────────────────────────────
 const RepoList: React.FC<{ onEnter: (repo: KnowledgeRepo) => void }> = ({ onEnter }) => {
-  const [tab, setTab] = useState<'mine' | 'all'>('mine');
+  const [tab, setTab] = useState<'mine' | 'all' | 'chat'>('mine');
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState<'all' | KnowledgeCategory>('all');
   const [filterType, setFilterType] = useState<string>('all');
@@ -804,35 +1470,53 @@ const RepoList: React.FC<{ onEnter: (repo: KnowledgeRepo) => void }> = ({ onEnte
     ? KNOWLEDGE_TYPES
     : KNOWLEDGE_TYPES.filter(t => t.category === filterCategory);
 
+  const LIST_TABS = [
+    { key: 'mine' as const,  label: '我的知识库', count: MOCK_REPOS.filter(r => r.isMine).length },
+    { key: 'all'  as const,  label: '全部知识库', count: MOCK_REPOS.length },
+    { key: 'chat' as const,  label: '💬 跨库对话', count: undefined },
+  ];
+
   return (
     <div style={{ animation: 'fadeUp 0.4s ease' }}>
-      {/* ── My / All Tab ── */}
+      {/* ── My / All / Chat Tab ── */}
       <div style={{ display: 'flex', gap: 0, borderBottom: `1px solid ${C.border}`, marginBottom: 20 }}>
-        {[{ key: 'mine' as const, label: '我的知识库', count: MOCK_REPOS.filter(r => r.isMine).length },
-          { key: 'all' as const,  label: '全部知识库', count: MOCK_REPOS.length }].map(({ key, label, count }) => {
+        {LIST_TABS.map(({ key, label, count }) => {
           const active = tab === key;
+          const isChat = key === 'chat';
           return (
-            <button key={key} className="kn-tab" onClick={() => { setTab(key); setFilterType('all'); setFilterCategory('all'); }}
+            <button key={key} className="kn-tab"
+              onClick={() => { setTab(key); if (!isChat) { setFilterType('all'); setFilterCategory('all'); } }}
               style={{
                 background: 'transparent', border: 'none',
-                borderBottom: `2px solid ${active ? C.blue : 'transparent'}`,
-                padding: '10px 20px', color: active ? C.blueLight : C.muted,
+                borderBottom: `2px solid ${active ? (isChat ? C.purple : C.blue) : 'transparent'}`,
+                padding: '10px 20px', color: active ? (isChat ? C.purpleLight : C.blueLight) : C.muted,
                 cursor: 'pointer', fontSize: 14, fontWeight: active ? 700 : 400,
                 transition: 'color 0.15s, border-color 0.15s',
                 display: 'flex', alignItems: 'center', gap: 6,
               }}
             >
               {label}
-              <span style={{
-                fontSize: 11, fontWeight: 700,
-                background: active ? C.blue : C.border,
-                color: active ? '#fff' : C.muted,
-                borderRadius: 10, padding: '1px 6px',
-              }}>{count}</span>
+              {count !== undefined && (
+                <span style={{
+                  fontSize: 11, fontWeight: 700,
+                  background: active ? (isChat ? C.purple : C.blue) : C.border,
+                  color: active ? '#fff' : C.muted,
+                  borderRadius: 10, padding: '1px 6px',
+                }}>{count}</span>
+              )}
             </button>
           );
         })}
       </div>
+
+      {/* ── Chat Tab 内容 ── */}
+      {tab === 'chat' && (
+        <div style={{ animation: 'fadeUp 0.3s ease' }}>
+          <GlobalSearchBar onEnterRepo={onEnter} />
+        </div>
+      )}
+      {tab === 'chat' && null /* 后续 return 提前退出 */}
+      {tab !== 'chat' && (<>
 
       {/* ── Search + Filter ── */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -978,6 +1662,7 @@ const RepoList: React.FC<{ onEnter: (repo: KnowledgeRepo) => void }> = ({ onEnte
           })}
         </div>
       )}
+    </>)}
     </div>
   );
 };
