@@ -77,26 +77,41 @@ interface KnowledgeTypeConfig {
   desc: string;
 }
 
-interface Contribution {
-  author: string;
-  avatar: string;
-  date: string;
+interface ExperienceInstance {
+  id: string;
+  pattern_id: string;
   signal: 'accepted' | 'modified' | 'rejected';
   userMessage: string;
   aiResponse: string;
+  author: string;
+  avatar: string;
+  date: string;
   repoKey: string;
 }
 
-interface PracticalExperience {
+interface ExperiencePattern {
   id: string;
   type: 'pitfall' | 'best_practice';
   title: string;
   summary: string;
-  triggerCount: number;
+  signals_match: string[];
+  confidence_level: 'emerging' | 'established' | 'canonical';
   knowledgeTypeKey: string;
-  verified: boolean;
   createdAt: string;
-  contributions: Contribution[];
+  expertVerified?: boolean;
+  instanceCount: number;
+}
+
+// 组件使用的聚合类型，由 ExperienceTab 在渲染时计算
+type ExperienceWithInstances = ExperiencePattern & { instances: ExperienceInstance[] };
+
+function deriveConfidenceLevel(
+  instanceCount: number,
+  expertVerified = false
+): ExperiencePattern['confidence_level'] {
+  if (expertVerified || instanceCount >= 9) return 'canonical';
+  if (instanceCount >= 4) return 'established';
+  return 'emerging';
 }
 
 const KNOWLEDGE_TYPES: KnowledgeTypeConfig[] = [
