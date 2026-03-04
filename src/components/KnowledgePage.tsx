@@ -1074,16 +1074,16 @@ const ExperienceCard: React.FC<{
   );
 };
 
-const SIGNAL_COLOR = (signal: Contribution['signal'], C: ColorTokens) => {
+const SIGNAL_COLOR = (signal: ExperienceInstance['signal'], C: ColorTokens) => {
   if (signal === 'rejected') return C.red ?? '#ef4444';
   if (signal === 'modified') return C.orange;
   return C.green;
 };
-const SIGNAL_LABEL = (signal: Contribution['signal']) =>
+const SIGNAL_LABEL = (signal: ExperienceInstance['signal']) =>
   ({ accepted: '采纳', modified: '修改', rejected: '拒绝' }[signal]);
 
 const TracePanel: React.FC<{
-  exp: PracticalExperience;
+  exp: ExperienceWithInstances;
   onClose: () => void;
   onEnterRepo: (repoKey: string) => void;
 }> = ({ exp, onClose, onEnterRepo }) => {
@@ -1105,7 +1105,7 @@ const TracePanel: React.FC<{
             {exp.type === 'pitfall' ? '🪤' : '✨'} {exp.title}
           </div>
           <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>
-            来源：{exp.knowledgeTypeKey} · ×{exp.triggerCount} 次触发
+            来源：{exp.knowledgeTypeKey} · ×{exp.instanceCount} 次触发
           </div>
         </div>
         <button
@@ -1118,10 +1118,10 @@ const TracePanel: React.FC<{
 
       {/* Contributions */}
       <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, marginBottom: 8 }}>
-        贡献对话（{exp.contributions.length}次）
+        贡献对话（{exp.instances.length}次）
       </div>
       <div style={{ overflowY: 'auto', maxHeight: 420, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {exp.contributions.map((c, i) => (
+        {exp.instances.map((c, i) => (
           <div
             key={i}
             className="trace-contribution"
