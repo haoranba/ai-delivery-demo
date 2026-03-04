@@ -1158,6 +1158,91 @@ const TracePanel: React.FC<{
   );
 };
 
+const ExperienceTab: React.FC<{ onEnterRepo: (typeKey: string) => void }> = ({ onEnterRepo }) => {
+  const C = useTheme();
+  const [selected, setSelected] = useState<PracticalExperience | null>(null);
+
+  const pitfalls = MOCK_EXPERIENCES
+    .filter(e => e.type === 'pitfall')
+    .sort((a, b) => b.triggerCount - a.triggerCount);
+
+  const bestPractices = MOCK_EXPERIENCES
+    .filter(e => e.type === 'best_practice')
+    .sort((a, b) => b.triggerCount - a.triggerCount);
+
+  const handleSelect = (exp: PracticalExperience) =>
+    setSelected(prev => prev?.id === exp.id ? null : exp);
+
+  const colStyle = (flex: number): React.CSSProperties => ({
+    flex, minWidth: 0, display: 'flex', flexDirection: 'column',
+    transition: 'flex 0.3s ease',
+  });
+
+  return (
+    <div style={{ animation: 'fadeUp 0.3s ease' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <div>
+          <span style={{ fontSize: 15, fontWeight: 800, color: C.text }}>⚡ 实战经验</span>
+          <span style={{ fontSize: 12, color: C.muted, marginLeft: 10 }}>
+            {MOCK_EXPERIENCES.length} 条 · 按热度排序
+          </span>
+        </div>
+      </div>
+
+      {/* Columns */}
+      <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+        {/* Pitfalls */}
+        <div style={colStyle(selected ? 2 : 3)}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: C.text, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+            🪤 踩坑沉淀
+            <span style={{ fontSize: 10, background: C.border, color: C.muted, borderRadius: 8, padding: '1px 6px' }}>
+              {pitfalls.length}条
+            </span>
+          </div>
+          {pitfalls.map(exp => (
+            <ExperienceCard
+              key={exp.id}
+              exp={exp}
+              selected={selected?.id === exp.id}
+              onClick={() => handleSelect(exp)}
+            />
+          ))}
+        </div>
+
+        {/* Best Practices */}
+        <div style={colStyle(selected ? 2 : 3)}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: C.text, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+            ✨ 最佳实践
+            <span style={{ fontSize: 10, background: C.border, color: C.muted, borderRadius: 8, padding: '1px 6px' }}>
+              {bestPractices.length}条
+            </span>
+          </div>
+          {bestPractices.map(exp => (
+            <ExperienceCard
+              key={exp.id}
+              exp={exp}
+              selected={selected?.id === exp.id}
+              onClick={() => handleSelect(exp)}
+            />
+          ))}
+        </div>
+
+        {/* Trace Panel (conditional) */}
+        {selected && (
+          <div style={colStyle(3)}>
+            <TracePanel
+              exp={selected}
+              onClose={() => setSelected(null)}
+              onEnterRepo={onEnterRepo}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // ─── Detail Page ──────────────────────────────────────────────────
 type DetailTab = 'docs' | 'prs' | 'members' | 'chat' | 'commits';
 
