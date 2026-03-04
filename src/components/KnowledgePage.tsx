@@ -1182,11 +1182,21 @@ const ExperienceTab: React.FC<{ onEnterRepo: (typeKey: string) => void }> = ({ o
   const C = useTheme();
   const [innerTab, setInnerTab] = useState<'pitfall' | 'best_practice'>('pitfall');
   const [page, setPage] = useState(0);
-  const [selected, setSelected] = useState<PracticalExperience | null>(null);
+  const [selected, setSelected] = useState<ExperienceWithInstances | null>(null);
 
-  const items = MOCK_EXPERIENCES
+  const instancesByPattern = MOCK_INSTANCES.reduce<Record<string, ExperienceInstance[]>>(
+    (acc, inst) => { (acc[inst.pattern_id] ??= []).push(inst); return acc; }, {}
+  );
+  const allPatterns: ExperienceWithInstances[] = MOCK_PATTERNS.map(p => ({
+    ...p,
+    instanceCount: instancesByPattern[p.id]?.length ?? 0,
+    confidence_level: deriveConfidenceLevel(instancesByPattern[p.id]?.length ?? 0, p.expertVerified),
+    instances: instancesByPattern[p.id] ?? [],
+  }));
+
+  const items = allPatterns
     .filter(e => e.type === innerTab)
-    .sort((a, b) => b.triggerCount - a.triggerCount);
+    .sort((a, b) => b.instanceCount - a.instanceCount);
 
   const totalPages = Math.max(1, Math.ceil(items.length / EXP_PAGE_SIZE));
   const pageItems = items.slice(page * EXP_PAGE_SIZE, (page + 1) * EXP_PAGE_SIZE);
@@ -1197,7 +1207,7 @@ const ExperienceTab: React.FC<{ onEnterRepo: (typeKey: string) => void }> = ({ o
     setSelected(null);
   };
 
-  const handleSelect = (exp: PracticalExperience) =>
+  const handleSelect = (exp: ExperienceWithInstances) =>
     setSelected(prev => prev?.id === exp.id ? null : exp);
 
   return (
@@ -1206,7 +1216,7 @@ const ExperienceTab: React.FC<{ onEnterRepo: (typeKey: string) => void }> = ({ o
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
         <span style={{ fontSize: 15, fontWeight: 800, color: C.text }}>⚡ 实战经验</span>
         <span style={{ fontSize: 12, color: C.muted, marginLeft: 10 }}>
-          {MOCK_EXPERIENCES.length} 条 · 按热度排序
+          {MOCK_PATTERNS.length} 条 · 按热度排序
         </span>
       </div>
 
@@ -1219,7 +1229,7 @@ const ExperienceTab: React.FC<{ onEnterRepo: (typeKey: string) => void }> = ({ o
           <div style={{ display: 'flex', borderBottom: `1px solid ${C.border}`, marginBottom: 14 }}>
             {INNER_TABS.map(({ key, label }) => {
               const active = innerTab === key;
-              const count = MOCK_EXPERIENCES.filter(e => e.type === key).length;
+              const count = allPatterns.filter(e => e.type === key).length;
               return (
                 <button key={key} className="kn-tab"
                   onClick={() => handleInnerTab(key)}
@@ -2076,7 +2086,7 @@ const RepoList: React.FC<{
     { key: 'mine'       as const, label: '我的知识库', count: repos.filter(r => r.isMine).length },
     { key: 'all'        as const, label: '全部知识库', count: repos.length },
     { key: 'chat'       as const, label: '💬 跨库对话', count: undefined },
-    { key: 'experience' as const, label: '⚡ 实战经验', count: MOCK_EXPERIENCES.length },
+    { key: 'experience' as const, label: '⚡ 实战经验', count: MOCK_PATTERNS.length },
   ];
 
   return (
