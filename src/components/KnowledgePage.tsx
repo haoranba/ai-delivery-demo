@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Briefcase, ClipboardList, Building2, Settings, Monitor, Palette, CheckCircle, BarChart2, Pin, Folder, FileText, Sparkles, Search, Brain, BookOpen } from 'lucide-react';
 import { useTheme } from '../ThemeContext';
+import type { ColorTokens } from '../ThemeContext';
 
 // ─── Style injection ──────────────────────────────────────────────
-const injectStyles = () => {
-  if (document.getElementById('knowledge-styles')) return;
+const injectStyles = (C: ColorTokens) => {
+  const existing = document.getElementById('knowledge-styles');
+  if (existing) existing.remove();
   const style = document.createElement('style');
   style.id = 'knowledge-styles';
   style.textContent = `
@@ -20,17 +22,17 @@ const injectStyles = () => {
       from { opacity: 0; transform: translateX(-12px); }
       to   { opacity: 1; transform: translateX(0); }
     }
-    .kn-tab:hover { color: #f1f5f9 !important; }
+    .kn-tab:hover { color: ${C.text} !important; }
     .kn-btn:hover { opacity: 0.85; transform: translateY(-1px); }
     .kn-btn { transition: opacity 0.15s, transform 0.15s; }
-    .kn-input:focus { outline: none; border-color: #3b82f6 !important; box-shadow: 0 0 0 3px rgba(59,130,246,0.15) !important; }
-    .kn-card:hover { background: #1e2a40 !important; border-color: #2d4060 !important; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+    .kn-input:focus { outline: none; border-color: ${C.blue} !important; box-shadow: 0 0 0 3px ${C.blue}26 !important; }
+    .kn-card:hover { background: ${C.border} !important; border-color: ${C.blue}60 !important; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
     .kn-card { transition: background 0.15s, border-color 0.15s, transform 0.2s, box-shadow 0.2s; }
-    .kn-tree-item:hover { background: rgba(59,130,246,0.08) !important; }
+    .kn-tree-item:hover { background: ${C.blue}14 !important; }
     .kn-tree-item { transition: background 0.12s; }
-    .kn-pr-row:hover { background: #1e2a40 !important; }
+    .kn-pr-row:hover { background: ${C.border} !important; }
     .kn-pr-row { transition: background 0.12s; }
-    .filter-chip:hover { border-color: #3b82f6 !important; color: #f1f5f9 !important; }
+    .filter-chip:hover { border-color: ${C.blue} !important; color: ${C.text} !important; }
     .filter-chip { transition: border-color 0.15s, color 0.15s, background 0.15s; }
   `;
   document.head.appendChild(style);
@@ -370,7 +372,7 @@ const TreeItem: React.FC<{
   onSelect: (name: string, content: string) => void;
 }> = ({ node, depth, selectedFile, onSelect }) => {
   const C = useTheme();
-  const blueLight = '#60a5fa';
+  const blueLight = C.blue;
   const [open, setOpen] = useState(depth === 0);
   const isSelected = node.type === 'file' && selectedFile === node.name;
 
@@ -421,7 +423,7 @@ const TreeItem: React.FC<{
 // ─── Markdown Renderer (simple) ───────────────────────────────────
 const MarkdownView: React.FC<{ content: string }> = ({ content }) => {
   const C = useTheme();
-  const blueLight = '#60a5fa';
+  const blueLight = C.blue;
   const lines = content.split('\n');
   const elements: React.ReactNode[] = [];
   let i = 0;
@@ -588,7 +590,7 @@ const simulateAIResponse = (input: string, repo: KnowledgeRepo): ChatMessage => 
 
 const ChatTab: React.FC<{ repo: KnowledgeRepo; onPRCreated: (pr: PRItem) => void }> = ({ repo, onPRCreated }) => {
   const C = useTheme();
-  const blueLight = '#60a5fa';
+  const blueLight = C.blue;
   const inputBg = C.bg;
   const [messages, setMessages] = useState<ChatMessage[]>(MOCK_CHAT_INIT);
   const [input, setInput] = useState('');
@@ -863,7 +865,7 @@ type DetailTab = 'docs' | 'prs' | 'members' | 'chat' | 'commits';
 
 const RepoDetail: React.FC<{ repo: KnowledgeRepo; onBack: () => void }> = ({ repo, onBack }) => {
   const C = useTheme();
-  const blueLight = '#60a5fa';
+  const blueLight = C.blue;
   const [activeTab, setActiveTab] = useState<DetailTab>('docs');
   const [selectedFile, setSelectedFile] = useState<string | null>('README.md');
   const [selectedContent, setSelectedContent] = useState<string>(
@@ -1228,7 +1230,7 @@ const resolveGlobalAnswer = (input: string): { answer: string; sources: GlobalCh
 // ─── Global Search Bar（对话式）──────────────────────────────────
 const GlobalSearchBar: React.FC<{ onEnterRepo: (repo: KnowledgeRepo) => void; reposCount: number }> = ({ onEnterRepo, reposCount }) => {
   const C = useTheme();
-  const purpleLight = '#a78bfa';
+  const purpleLight = C.purple;
   const inputBg = C.bg;
   const [expanded, setExpanded] = useState(false);
   const [messages, setMessages] = useState<GlobalChatMsg[]>([
@@ -1613,8 +1615,8 @@ const RepoList: React.FC<{
   onCreate: (repo: KnowledgeRepo) => void;
 }> = ({ repos, onEnter, onCreate }) => {
   const C = useTheme();
-  const blueLight = '#60a5fa';
-  const purpleLight = '#a78bfa';
+  const blueLight = C.blue;
+  const purpleLight = C.purple;
   const inputBg = C.bg;
   const [tab, setTab] = useState<'mine' | 'all' | 'chat'>('mine');
   const [search, setSearch] = useState('');
@@ -1862,8 +1864,8 @@ const KnowledgePage: React.FC = () => {
   const [repos, setRepos] = useState<KnowledgeRepo[]>(MOCK_REPOS);
 
   useEffect(() => {
-    injectStyles();
-  }, []);
+    injectStyles(C);
+  }, [C]);
 
   const handleCreateRepo = (repo: KnowledgeRepo) => {
     setRepos(prev => [repo, ...prev]);
