@@ -1061,6 +1061,103 @@ const ExperienceCard: React.FC<{
   );
 };
 
+const SIGNAL_COLOR = (signal: Contribution['signal'], C: ColorTokens) => {
+  if (signal === 'rejected') return C.red ?? '#ef4444';
+  if (signal === 'modified') return C.orange;
+  return C.green;
+};
+const SIGNAL_LABEL = (signal: Contribution['signal']) =>
+  ({ accepted: '采纳', modified: '修改', rejected: '拒绝' }[signal]);
+
+const TracePanel: React.FC<{
+  exp: PracticalExperience;
+  onClose: () => void;
+  onEnterRepo: (repoKey: string) => void;
+}> = ({ exp, onClose, onEnterRepo }) => {
+  const C = useTheme();
+
+  return (
+    <div style={{
+      background: C.card, border: `1px solid ${C.border}`,
+      borderRadius: C.radius, padding: '16px 18px',
+      animation: 'slideIn 0.2s ease',
+      display: 'flex', flexDirection: 'column', gap: 0,
+      overflow: 'hidden',
+    }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div>
+          <div style={{ fontSize: 12, color: C.muted, marginBottom: 4 }}>📎 溯源对话</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: C.text, lineHeight: 1.4 }}>
+            {exp.type === 'pitfall' ? '🪤' : '✨'} {exp.title}
+          </div>
+          <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>
+            来源：{exp.knowledgeTypeKey} · ×{exp.triggerCount} 次触发
+          </div>
+        </div>
+        <button
+          onClick={onClose}
+          style={{ background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 16, padding: 0, lineHeight: 1 }}
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* Contributions */}
+      <div style={{ fontSize: 12, fontWeight: 700, color: C.muted, marginBottom: 8 }}>
+        贡献对话（{exp.contributions.length}次）
+      </div>
+      <div style={{ overflowY: 'auto', maxHeight: 420, display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {exp.contributions.map((c, i) => (
+          <div
+            key={i}
+            className="trace-contribution"
+            style={{
+              background: C.bg, border: `1px solid ${C.border}`,
+              borderRadius: 8, padding: '10px 12px',
+            }}
+          >
+            {/* Contribution header */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <span style={{ fontSize: 12, color: C.text }}>
+                {c.avatar} {c.author} · {c.date}
+              </span>
+              <span style={{
+                fontSize: 10, fontWeight: 700, padding: '1px 6px',
+                borderRadius: 4, background: `${SIGNAL_COLOR(c.signal, C)}18`,
+                color: SIGNAL_COLOR(c.signal, C),
+              }}>
+                {SIGNAL_LABEL(c.signal)}
+              </span>
+            </div>
+            {/* User message */}
+            <div style={{ fontSize: 12, color: C.muted, marginBottom: 6, lineHeight: 1.5 }}>
+              <span style={{ fontWeight: 600, color: C.text }}>用户：</span>{c.userMessage}
+            </div>
+            {/* AI response */}
+            <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.5 }}>
+              <span style={{ fontWeight: 600, color: C.blue }}>AI：</span>{c.aiResponse}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Footer action */}
+      <button
+        className="kn-btn"
+        onClick={() => onEnterRepo(exp.knowledgeTypeKey)}
+        style={{
+          marginTop: 14, background: C.blue, color: '#fff', border: 'none',
+          borderRadius: 8, padding: '8px 14px', cursor: 'pointer',
+          fontSize: 12, fontWeight: 700, textAlign: 'left',
+        }}
+      >
+        → 进入{exp.knowledgeTypeKey}知识库
+      </button>
+    </div>
+  );
+};
+
 // ─── Detail Page ──────────────────────────────────────────────────
 type DetailTab = 'docs' | 'prs' | 'members' | 'chat' | 'commits';
 
