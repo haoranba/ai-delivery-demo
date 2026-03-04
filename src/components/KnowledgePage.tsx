@@ -1007,20 +1007,20 @@ const CommitsTab: React.FC<{ repo: KnowledgeRepo }> = ({ repo }) => {
 
 // ─── Experience Tab ───────────────────────────────────────────────
 
-const HEAT_COLOR = (count: number, C: ColorTokens) => {
-  if (count >= 9) return C.red ?? '#ef4444';
-  if (count >= 4) return C.orange;
+const HEAT_COLOR = (instanceCount: number, C: ColorTokens) => {
+  if (instanceCount >= 9) return C.red ?? '#ef4444';
+  if (instanceCount >= 4) return C.orange;
   return C.blue;
 };
 
 const ExperienceCard: React.FC<{
-  exp: PracticalExperience;
+  exp: ExperienceWithInstances;
   selected: boolean;
   onClick: () => void;
 }> = ({ exp, selected, onClick }) => {
   const C = useTheme();
-  const heatColor = HEAT_COLOR(exp.triggerCount, C);
-  const heatPct = Math.min(100, (exp.triggerCount / 15) * 100);
+  const heatColor = HEAT_COLOR(exp.instanceCount, C);
+  const heatPct = Math.min(100, (exp.instanceCount / 15) * 100);
   const typeConfig = getTypeConfig(exp.knowledgeTypeKey);
 
   return (
@@ -1044,7 +1044,7 @@ const ExperienceCard: React.FC<{
           <div style={{ width: `${heatPct}%`, height: '100%', background: heatColor, borderRadius: 2, transition: 'width 0.4s ease' }} />
         </div>
         {/* Count */}
-        <span style={{ fontSize: 11, fontWeight: 700, color: heatColor }}>×{exp.triggerCount}</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: heatColor }}>×{exp.instanceCount}</span>
         {/* Type tag */}
         <span style={{
           fontSize: 10, padding: '1px 6px', borderRadius: 4,
@@ -1053,7 +1053,7 @@ const ExperienceCard: React.FC<{
           {exp.knowledgeTypeKey}
         </span>
         {/* Verified */}
-        {exp.verified && (
+        {exp.confidence_level === 'canonical' && (
           <span style={{ fontSize: 10, color: '#10b981', fontWeight: 700 }}>✓ 已验证</span>
         )}
       </div>
@@ -1068,7 +1068,7 @@ const ExperienceCard: React.FC<{
 
       {/* Footer */}
       <div style={{ fontSize: 11, color: C.border }}>
-        {exp.createdAt} · {exp.contributions[0]?.author}
+        {exp.createdAt} · {exp.instances[0]?.author}
       </div>
     </div>
   );
